@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Traceability Hub Concept</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Red+Hat+Display:wght@500;600;700;800&family=Public+Sans:wght@400;500;600&family=Red+Hat+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column; figures run full column width; mapping table scrolls on its own when narrow */
+:root{
+  --bg:#FFFFFF; --soft:#F3F6F4; --ink:#000000; --muted:#4E5752; --line:#DCE2DE;
+  --brand:#00BF63; --brand-text:#007A40; --brand-soft:#DDF7EA;
+  --display:"Red Hat Display","Helvetica Neue",Arial,sans-serif;
+  --body:"Public Sans","Segoe UI",system-ui,sans-serif;
+  --mono:"Red Hat Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#000000; --soft:#0E1110; --ink:#FFFFFF; --muted:#A3ADA8; --line:#26302B;
+  --brand:#00BF63; --brand-text:#00BF63; --brand-soft:#0B3320; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#000000; --soft:#0E1110; --ink:#FFFFFF; --muted:#A3ADA8; --line:#26302B;
+  --brand:#00BF63; --brand-text:#00BF63; --brand-soft:#0B3320; color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.6;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:48px 72px}
+.wrap{max-width:980px;margin:0 auto;display:flex;flex-direction:column;gap:64px}
+h1,h2,h3{font-family:var(--display);margin:0;text-wrap:balance;letter-spacing:-.01em}
+h1{font-size:clamp(30px,5vw,48px);line-height:1.05;font-weight:800}
+h2{font-size:clamp(22px,3vw,28px);font-weight:700;line-height:1.15}
+h3{font-size:17px;font-weight:700}
+p{margin:0;max-width:66ch}
+a{color:var(--brand-text)}
+.eyebrow{font-family:var(--mono);font-size:12.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.lede{font-size:19px;line-height:1.55}
+.muted{color:var(--muted)}
+header{display:flex;flex-direction:column;gap:18px;padding-bottom:36px;border-bottom:4px solid var(--brand)}
+.cta{display:flex;flex-wrap:wrap;align-items:center;gap:12px 18px;margin-top:6px}
+.btn{display:inline-block;background:var(--brand);color:#000;font-family:var(--display);font-weight:700;text-decoration:none;padding:12px 20px;border-radius:6px}
+.btn:hover{filter:brightness(1.06)}
+.note{font-size:14px;color:var(--muted)}
+section{display:flex;flex-direction:column;gap:22px}
+.shead{display:flex;flex-direction:column;gap:8px}
+.three{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.pillar{border-top:3px solid var(--brand);padding-top:14px;display:flex;flex-direction:column;gap:8px}
+.pillar p{font-size:15px}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:8px}
+table{border-collapse:collapse;width:100%;min-width:640px;font-size:15px}
+th,td{text-align:left;vertical-align:top;padding:12px 14px;border-bottom:1px solid var(--line)}
+thead th{font-family:var(--mono);font-size:11.5px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--soft)}
+tbody th{font-family:var(--display);font-weight:700;width:26%}
+tr:last-child th,tr:last-child td{border-bottom:0}
+.tag{display:inline-block;font-family:var(--mono);font-size:11px;padding:1px 7px;border-radius:999px;background:var(--brand-soft);color:var(--brand-text);margin-right:4px;white-space:nowrap}
+figure{margin:0;display:flex;flex-direction:column;gap:10px}
+figure img{width:100%;height:auto;display:block;border:1px solid var(--line);border-radius:8px;background:#fff}
+figcaption{font-size:14.5px;color:var(--muted);max-width:72ch}
+figcaption b{color:var(--ink);font-family:var(--display)}
+.figs{display:flex;flex-direction:column;gap:40px}
+.who{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+.card{background:var(--soft);border-radius:8px;padding:16px 18px;display:flex;flex-direction:column;gap:6px}
+.card p{font-size:15px}
+ul.req{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:8px;max-width:70ch}
+ol.steps{margin:0;padding:0;list-style:none;counter-reset:s;display:flex;flex-direction:column;gap:14px}
+ol.steps li{counter-increment:s;display:grid;grid-template-columns:40px 1fr;gap:12px;align-items:start}
+ol.steps li::before{content:counter(s);font-family:var(--display);font-weight:800;font-size:18px;width:34px;height:34px;border-radius:50%;background:var(--brand);color:#000;display:flex;align-items:center;justify-content:center}
+ol.steps li p{padding-top:4px}
+footer{font-size:13.5px;color:var(--muted);border-top:1px solid var(--line);padding-top:18px;display:flex;flex-direction:column;gap:6px}
+@media (max-width:760px){.three,.who{grid-template-columns:1fr} .wrap{gap:52px} body{padding-block:32px 56px}}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+<header>
+  <span class="eyebrow">Platform concept · for discussion · November 2026</span>
+  <h1>A shared online space for the agri-food interoperability forum</h1>
+  <p class="lede">The people the forum needs are already stretched across other initiatives. Meetings alone won’t carry alignment. An online hub lets participants contribute when it suits them, builds the forum’s evidence base as it goes, and shows everyone, funders included, what is moving.</p>
+  <div class="cta">
+    <a class="btn" href="https://claude.ai/artifact/N5Tp9b68EiRLQ8nHae1HjX" target="_blank" rel="noopener">Open the working prototype</a>
+    <span class="note">The prototype needs an invitation to open. Entries are drafts from public sources, for illustration.</span>
+  </div>
+</header>
+
+<section>
+  <div class="shead"><span class="eyebrow">Purpose</span><h2>Three jobs the hub does for the forum</h2></div>
+  <div class="three">
+    <div class="pillar"><h3>Build on what exists</h3><p>A living map of initiatives, kept up to date by the initiatives themselves, showing what each one does, how far it has got, and which earlier work it reuses. New efforts start from what is already there.</p></div>
+    <div class="pillar"><h3>Agree what blocks progress</h3><p>Participants raise hurdles and vote on them. The forum gets a ranked, evidence-based agenda for its working groups instead of one drawn from a few conversations.</p></div>
+    <div class="pillar"><h3>Show what is moving</h3><p>Progress, coverage gaps and funding status in one view, so participants see the bigger picture and funders can back reuse rather than duplication.</p></div>
+  </div>
+</section>
+
+<section>
+  <div class="shead"><span class="eyebrow">Fit with the roadmap</span><h2>How it supports each activity in the forum roadmap</h2><p class="muted">The hub doesn’t replace convening. It makes each meeting count by doing the gathering, ranking and follow-up in between.</p></div>
+  <div class="tw"><table>
+    <thead><tr><th>Roadmap activity</th><th>What the hub provides</th><th>What changes for participants</th></tr></thead>
+    <tbody>
+      <tr><th>A. Support existing initiatives</th><td><span class="tag">Initiatives</span><span class="tag">Pathways</span> A crowd-sourced map of initiatives, and a view of which work builds on which.</td><td>Initiatives correct their own entry once, instead of briefing the forum repeatedly. The “shared pathways to interoperability” in the roadmap update themselves.</td></tr>
+      <tr><th>B. Support champions</th><td><span class="tag">Ideas</span><span class="tag">News</span> Set questions to answer, support votes, and a shared feed of developments.</td><td>Champions get material to take back inside their organisations, such as answers to “what would you need to tell your finance director?”</td></tr>
+      <tr><th>C. Thematic knowledge-sharing</th><td><span class="tag">Hurdles</span> A ranked list of shared hurdles, filterable by industry, region and commodity.</td><td>Working-group topics come from what participants vote for, and each group starts with the evidence already gathered.</td></tr>
+      <tr><th>D. Finding resources</th><td><span class="tag">Progress and funding</span> What is funded, what is seeking funding, and where the coverage gaps are.</td><td>Funders see where a grant unlocks reuse by others. Joint fundraising starts from a shared picture.</td></tr>
+      <tr><th>Policy and regulation</th><td><span class="tag">Regulation</span> A tracker of the rules and standards driving demand, with countdowns and sources.</td><td>A reason to come back even with nothing to post, and a common reference for talks with regulators.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section>
+  <div class="shead"><span class="eyebrow">Inside the prototype</span><h2>What participants see</h2></div>
+  <div class="figs">
+    <figure><img src="overview.jpg" alt="Hub overview: counts of initiatives, hurdles and rules tracked, next regulatory dates, top-voted hurdles and latest news" width="2400" height="2000" loading="lazy"><figcaption><b>Overview.</b> The next regulatory dates, the hurdles participants rank highest, and the latest news, all filterable by industry, region and commodity.</figcaption></figure>
+    <figure><img src="progress.jpg" alt="Progress and funding view: funding counts, a pathways tree of initiatives building on each other, and a coverage grid by commodity and stage" width="2400" height="2500" loading="lazy"><figcaption><b>Progress and funding.</b> Which initiatives build on which, where coverage is thin (leather has nothing live; cotton and battery minerals aren’t mapped yet), and how little funding information is public today.</figcaption></figure>
+    <figure><img src="hurdles.jpg" alt="Hurdles board with vote counts beside each hurdle" width="2400" height="1800" loading="lazy"><figcaption><b>Hurdles.</b> Seeded from the challenges in the forum roadmap. Participants vote, and the list re-ranks itself into a working-group agenda.</figcaption></figure>
+    <figure><img src="regulation.jpg" alt="Regulation tracker listing rules by next key date, with a key-dates timeline" width="2400" height="1900" loading="lazy"><figcaption><b>Regulation.</b> EUDR, EU product passports, the forced labour regulation, FSMA 204, the UK forest risk regime and Brazil’s cattle identification plan, each with its next date and source.</figcaption></figure>
+  </div>
+</section>
+
+<section>
+  <div class="shead"><span class="eyebrow">Audiences</span><h2>Who uses it, and what they get</h2></div>
+  <div class="who">
+    <div class="card"><h3>Initiative leads</h3><p>Visibility for their work beyond their own network, lessons from others, and a voice in shared rules without another standing meeting.</p></div>
+    <div class="card"><h3>Companies and traders</h3><p>One place to see which standards are converging, what regulation requires and when, and where their data effort can be reused.</p></div>
+    <div class="card"><h3>Governments and regulators</h3><p>A view of industry practice and blockers to inform implementation, and a channel to producer-country systems.</p></div>
+    <div class="card"><h3>Funders</h3><p>What their money is moving, what builds on what, and where the gaps are, so they can fund the shared base rather than parallel efforts.</p></div>
+  </div>
+</section>
+
+<section>
+  <div class="shead"><span class="eyebrow">Conditions</span><h2>What it takes to work</h2><p class="muted">Most online platforms like this go quiet within months. These are the things that prevent that.</p></div>
+  <ul class="req">
+    <li><b>A named facilitator</b> who curates entries, prompts contributions and closes the loop. This can come from the forum’s existing facilitation days.</li>
+    <li><b>Neutral hosting.</b> If the space looks like one initiative’s or one vendor’s property, others won’t use it. A UNECE home matters.</li>
+    <li><b>Clear rules on who sees what</b>, with an option for contributions that aren’t attributed, since some input will be commercially sensitive.</li>
+    <li><b>A short monthly digest by email.</b> Most people will follow through the digest, not the platform.</li>
+    <li><b>Visible follow-through.</b> Show what changed because of people’s input, for example “the three hurdles you ranked highest became the working-group topics”.</li>
+  </ul>
+</section>
+
+<section>
+  <div class="shead"><span class="eyebrow">Next steps</span><h2>A light way to test it</h2></div>
+  <ol class="steps">
+    <li><p><b>Seed it</b> with the 10 to 15 initiatives the forum already works with, and invite each lead to correct their entry.</p></li>
+    <li><p><b>Run the hurdles vote</b> ahead of the first steering group, and use the ranking to set the working-group topics.</p></li>
+    <li><p><b>Send the first monthly digest</b> with the top hurdles, regulatory dates and what changed.</p></li>
+    <li><p><b>Review after three months:</b> did it cut meetings and repeated requests, and did initiatives keep their entries current?</p></li>
+  </ol>
+</section>
+
+<footer>
+  <span>Concept note for discussion. The prototype’s entries were drafted from public sources in November 2026 and are there to illustrate the idea; they need checking by the initiatives themselves.</span>
+</footer>
+</div>
+
+</body>
+</html>
