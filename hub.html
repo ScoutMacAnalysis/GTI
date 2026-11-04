@@ -1,0 +1,616 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Traceability Alignment Hub</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Red+Hat+Display:wght@500;600;700;800&family=Public+Sans:wght@400;500;600&family=Red+Hat+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: sticky header with tabs and filter bar; one content column of cards and lists below */
+:root{
+  --bg:#F5F7F6; --surface:#FFFFFF; --sunk:#EDF1EF; --ink:#000000; --muted:#4E5752; --line:#D9DFDB;
+  --brand:#00BF63; --accent:#007A40; --accent-ink:#000000; --accent-soft:#D9F6E7;
+  --warn:#9A5B0C; --warn-soft:#F6E9D4; --crit:#A3343F; --crit-soft:#F6DFE1; --info:#2F3A6E; --info-soft:#E4E7F2;
+  --logo-l:inline-block; --logo-d:none;
+  --display:"Red Hat Display","Helvetica Neue",Arial,sans-serif;
+  --body:"Public Sans","Segoe UI",system-ui,sans-serif;
+  --mono:"Red Hat Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#000000; --surface:#0D0F0E; --sunk:#151917; --ink:#FFFFFF; --muted:#A3ADA8; --line:#27302B;
+  --brand:#00BF63; --accent:#00BF63; --accent-ink:#000000; --accent-soft:#0B3320; --logo-l:none; --logo-d:inline-block;
+  --warn:#E2AA4C; --warn-soft:#3A2D16; --crit:#EF8A93; --crit-soft:#3C2023; --info:#9AA8EC; --info-soft:#232A47; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#000000; --surface:#0D0F0E; --sunk:#151917; --ink:#FFFFFF; --muted:#A3ADA8; --line:#27302B;
+  --brand:#00BF63; --accent:#00BF63; --accent-ink:#000000; --accent-soft:#0B3320; --logo-l:none; --logo-d:inline-block;
+  --warn:#E2AA4C; --warn-soft:#3A2D16; --crit:#EF8A93; --crit-soft:#3C2023; --info:#9AA8EC; --info-soft:#232A47; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.55;margin:0}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+.gut{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.inner{max-width:1100px;margin:0 auto}
+h1,h2,h3{font-family:var(--display);margin:0;text-wrap:balance;letter-spacing:-.01em}
+h1{font-size:22px;font-weight:700} h2{font-size:19px;font-weight:600} h3{font-size:15.5px;font-weight:600}
+p{margin:0}
+a{color:var(--accent)}
+.mono{font-family:var(--mono)}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--surface);border-bottom:1px solid var(--line)}
+.brand{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;padding-block:14px 8px}
+.brand .tag{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;padding:2px 8px;border-radius:999px;background:var(--warn-soft);color:var(--warn)}
+.brand .sub{flex-basis:100%;color:var(--muted);font-size:13.5px}
+nav.tabs{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none}
+nav.tabs::-webkit-scrollbar{display:none}
+nav.tabs a{padding:9px 12px;text-decoration:none;color:var(--muted);font-weight:500;font-size:14px;border-bottom:2px solid transparent;white-space:nowrap}
+nav.tabs a[aria-current="page"]{color:var(--ink);border-bottom:3px solid var(--brand);padding-bottom:8px}
+.logo{display:inline-flex;align-items:center;gap:9px;border:3px solid var(--brand);padding:5px 11px 5px 8px;text-decoration:none;color:var(--ink);flex:none}
+.logo img{width:34px;height:34px}
+.logo .lg-l{display:var(--logo-l)} .logo .lg-d{display:var(--logo-d)}
+.wm{display:flex;flex-direction:column;font-family:var(--display);font-weight:800;font-size:14px;line-height:.92;letter-spacing:.01em}
+.wm i{font-style:normal;font-family:var(--body);font-weight:500;font-size:8px;letter-spacing:.34em;margin-top:3px}
+h1{font-weight:800}
+nav.tabs a .ct{font-family:var(--mono);font-size:11px;margin-left:5px;color:var(--muted)}
+
+.filterbar{background:var(--sunk);border-bottom:1px solid var(--line)}
+.filterbar .row{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding-block:9px}
+.fbtn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:5px 10px;cursor:pointer;font-size:13.5px}
+.fbtn .n{font-family:var(--mono);font-size:11px;background:var(--brand);color:var(--accent-ink);border-radius:999px;padding:0 6px;min-width:18px;text-align:center}
+.fbtn[aria-expanded="true"]{border-color:var(--accent)}
+.search{flex:1 1 180px;min-width:0;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:5px 10px;font-size:13.5px}
+.clear{background:none;border:0;color:var(--accent);cursor:pointer;font-size:13px;padding:4px}
+.fpanel{padding-bottom:12px;display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:3px 10px;font-size:13px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--brand);border-color:var(--brand);color:var(--accent-ink)}
+
+main{padding-block:22px 64px}
+.view{display:flex;flex-direction:column;gap:18px}
+.vhead{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:10px}
+.vhead p{max-width:70ch}
+.notice{font-size:13.5px;padding:9px 12px;border-radius:8px;background:var(--info-soft);color:var(--info)}
+.notice.warn{background:var(--warn-soft);color:var(--warn)}
+
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.gridreg{grid-template-columns:minmax(0,2fr) minmax(0,1fr)}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.panel .ph{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.panel .ph a{font-size:13px}
+.stats{display:flex;flex-wrap:wrap;gap:10px}
+.stat{flex:1 1 140px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.stat b{display:block;font-family:var(--display);font-size:24px;font-variant-numeric:tabular-nums}
+.stat span{font-size:13px;color:var(--muted)}
+
+.list{display:flex;flex-direction:column}
+.item{display:flex;gap:12px;padding:12px 0;border-top:1px solid var(--line);min-width:0}
+.item:first-child{border-top:0;padding-top:2px}
+.item .body{flex:1;min-width:0;display:flex;flex-direction:column;gap:5px}
+.item .title{font-weight:600}
+.meta{display:flex;flex-wrap:wrap;gap:4px 10px;font-size:12.5px;color:var(--muted)}
+.tags{display:flex;flex-wrap:wrap;gap:4px}
+.t{font-size:11.5px;padding:1px 7px;border-radius:999px;background:var(--sunk);color:var(--muted);white-space:nowrap}
+.pill{font-family:var(--mono);font-size:11px;padding:2px 8px;border-radius:999px;white-space:nowrap;border:1px solid currentColor}
+.pill.live{color:var(--accent)} .pill.pending{color:var(--warn)} .pill.proposed{color:var(--info)} .pill.seed{color:var(--muted);border-style:dashed}
+.date{font-family:var(--mono);font-size:12px;font-variant-numeric:tabular-nums;color:var(--muted);white-space:nowrap}
+.when{flex:none;width:96px;display:flex;flex-direction:column;gap:2px}
+.when b{font-family:var(--mono);font-size:12.5px;font-weight:500;font-variant-numeric:tabular-nums}
+.when span{font-size:11.5px;color:var(--muted)}
+.when.soon b{color:var(--crit)}
+.vote{flex:none;width:52px;display:flex;flex-direction:column;align-items:center;gap:2px;border:1px solid var(--line);border-radius:8px;background:var(--surface);cursor:pointer;padding:6px 0;height:max-content}
+.vote b{font-family:var(--mono);font-size:15px;font-variant-numeric:tabular-nums}
+.vote span{font-size:10.5px;color:var(--muted)}
+.vote[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--brand)}
+.vote:disabled{cursor:default;opacity:.7}
+.actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.lnk{background:none;border:0;padding:0;color:var(--accent);cursor:pointer;font-size:13px}
+.lnk.danger{color:var(--crit)}
+
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:14px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.card .top{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+.kv{display:grid;grid-template-columns:96px 1fr;gap:3px 10px;font-size:13px}
+.kv dt{color:var(--muted)} .kv dd{margin:0;min-width:0}
+.updates{border-top:1px dashed var(--line);padding-top:8px;display:flex;flex-direction:column;gap:6px;font-size:13px}
+
+details.add{background:var(--surface);border:1px solid var(--line);border-radius:10px}
+details.add>summary{cursor:pointer;padding:12px 16px;font-weight:600;list-style:none;display:flex;align-items:center;gap:8px;color:var(--accent)}
+details.add>summary::-webkit-details-marker{display:none}
+details.add>summary::before{content:"+";font-family:var(--mono);font-size:16px}
+details.add[open]>summary::before{content:"\2212"}
+form.f{padding:0 16px 16px;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+form.f .full{grid-column:1/-1}
+form.f label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted);min-width:0}
+form.f input,form.f select,form.f textarea{border:1px solid var(--line);border-radius:8px;padding:7px 9px;background:var(--bg);font-size:14px;width:100%}
+form.f textarea{min-height:76px;resize:vertical}
+fieldset.tagpick{border:0;padding:0;margin:0;display:flex;flex-direction:column;gap:5px;min-width:0}
+fieldset.tagpick legend{font-size:13px;color:var(--muted);padding:0;margin-bottom:4px}
+fieldset.tagpick .opts{display:flex;flex-wrap:wrap;gap:5px}
+.btn{background:var(--brand);color:var(--accent-ink);border:0;border-radius:8px;padding:8px 14px;font-weight:600;cursor:pointer}
+.btn:disabled{opacity:.5;cursor:default}
+.err{color:var(--crit);font-size:13px}
+.ok{color:var(--accent);font-size:13px}
+
+.timeline{display:flex;flex-direction:column;gap:0;border-left:2px solid var(--line);margin-left:6px}
+.tl{position:relative;padding:6px 0 10px 18px}
+.tl::before{content:"";position:absolute;left:-7px;top:11px;width:12px;height:12px;border-radius:50%;background:var(--surface);border:2px solid var(--line)}
+.tl.next::before{background:var(--brand);border-color:var(--brand)}
+.tl.past{opacity:.6}
+.tl .d{font-family:var(--mono);font-size:12.5px;font-variant-numeric:tabular-nums}
+.tl .l{font-size:14px}
+.imap{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr) minmax(0,1.35fr) minmax(0,1fr) minmax(0,.9fr);gap:12px;align-items:stretch}
+.mcol{display:flex;flex-direction:column;gap:8px;justify-content:center;min-width:0}
+.mh{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);text-align:center;margin-bottom:2px}
+.mthemes{background:var(--accent-soft);border-radius:18px;padding:12px 10px}
+.musers{background:var(--ink);border-radius:18px;padding:12px 10px}
+.musers .mh{color:var(--bg);opacity:.8}
+.mnode,.mprod,.mcomm{font:inherit;color:var(--ink);cursor:pointer;text-align:center;display:flex;flex-direction:column;align-items:center;gap:2px}
+.mnode{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:9px 12px;font-size:13px;font-weight:600}
+.mnode .mc{font-family:var(--mono);font-size:10.5px;font-weight:400;color:var(--muted)}
+.mnode.user{background:transparent;color:var(--bg);border-color:var(--muted);padding:16px 10px}
+.mprod{border:1px solid var(--line);background:var(--surface);border-radius:6px;padding:7px 8px;font-size:12.5px;display:block}
+.mprod .mc{font-family:var(--mono);font-size:10.5px;background:var(--accent-soft);color:var(--accent);border-radius:999px;padding:0 6px}
+.mprod .ar{color:var(--brand);font-weight:700}
+.mprod.gap{border-style:dashed;color:var(--muted);background:transparent}
+.mprod .gp{font-family:var(--mono);font-size:10px;color:var(--warn);text-transform:uppercase;letter-spacing:.05em}
+.mcomm{border:1px solid var(--line);background:var(--sunk);border-radius:50%;padding:26px 18px;min-height:118px;justify-content:center;font-weight:700;font-family:var(--display);font-size:15px}
+.mcomm.cross{border-radius:999px;min-height:0;padding:12px 14px;font-size:13px;border-style:dashed;background:transparent}
+.mcomm .mc{font-family:var(--mono);font-size:11px;font-weight:400;color:var(--muted)}
+.mchips{display:flex;flex-wrap:wrap;gap:3px;justify-content:center;margin-top:3px}
+.mchips i{font-style:normal;font-family:var(--body);font-weight:400;font-size:10.5px;background:var(--surface);border-radius:999px;padding:0 6px;color:var(--muted)}
+.mnode[aria-pressed="true"],.mprod[aria-pressed="true"],.mcomm[aria-pressed="true"]{outline:3px solid var(--brand);outline-offset:1px}
+.mnode:hover,.mprod:hover,.mcomm:hover{border-color:var(--brand)}
+.mband{display:flex;justify-content:space-between;background:var(--ink);color:var(--bg);font-family:var(--display);font-weight:700;font-size:13px;padding:8px 16px;border-radius:6px;margin-top:-6px}
+.mdetail{scroll-margin-top:16px}
+.mdetail h3.sub3{font-size:13.5px;margin:4px 0 6px;color:var(--muted)}
+.mgroup{display:flex;flex-direction:column;gap:4px;padding:6px 0;border-top:1px solid var(--line)}
+.mgroup:first-child{border-top:0}
+@media (max-width:900px){.imap{grid-template-columns:1fr}.mcomm{border-radius:18px;min-height:0;padding:14px}.mband{margin-top:0}}
+.svwrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.imapsvg{display:block;width:100%;min-width:880px;height:auto;font-family:var(--body)}
+.sv-lpanel{fill:var(--accent-soft)} .sv-rpanel{fill:var(--ink)}
+.sv-ph{fill:var(--ink);font-size:16px} .sv-rph{fill:var(--bg);font-size:17px}
+.sv-h{fill:var(--ink);font-family:var(--display);font-weight:800;font-size:19px}
+.sv-theme{fill:var(--surface);stroke:var(--line);stroke-width:1}
+.sv-tl{fill:var(--ink);font-size:14px;font-weight:600} .sv-tc{fill:var(--muted);font-family:var(--mono);font-size:11px}
+.sv-prod{fill:var(--surface);stroke:var(--ink);stroke-width:1} .sv-prod.sv-in{fill:var(--accent-soft)}
+.sv-prod.sv-gap{fill:none;stroke:var(--muted);stroke-dasharray:5 4}
+.sv-pl{fill:var(--ink);font-size:13.5px} .sv-pc{fill:var(--accent);font-family:var(--mono);font-size:10.5px} .sv-gapt{fill:var(--warn);text-transform:uppercase;letter-spacing:.06em}
+.sv-comm{fill:var(--sunk);stroke:var(--line);stroke-width:1} .sv-cross{fill:none;stroke:var(--muted);stroke-dasharray:5 4}
+.sv-cl{fill:var(--ink);font-family:var(--display);font-weight:700;font-size:18px} .sv-cl2{fill:var(--ink);font-weight:600;font-size:13.5px}
+.sv-chip{fill:var(--muted);font-size:11.5px}
+.sv-user{fill:none;stroke:var(--bg);stroke-opacity:.55;stroke-width:1.2} .sv-ul{fill:var(--bg);font-size:14px;font-weight:600}
+.sv-arr{stroke:var(--ink);stroke-width:2;stroke-dasharray:2 4;stroke-linecap:round} .sv-head{fill:none;stroke:var(--ink);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.sv-band{fill:var(--ink)} .sv-bt{fill:var(--bg);font-family:var(--display);font-weight:700;font-size:15px}
+.sv-click{cursor:pointer} .sv-click:hover rect,.sv-click:hover ellipse{stroke:var(--brand);stroke-width:2;stroke-opacity:1}
+.sv-click:focus{outline:none} .sv-click:focus-visible rect,.sv-click:focus-visible ellipse{stroke:var(--brand);stroke-width:3;stroke-opacity:1}
+.sv-on{stroke:var(--brand)!important;stroke-width:3.5!important;stroke-opacity:1!important;stroke-dasharray:none!important}
+.svhint{font-size:12.5px;color:var(--muted)}
+@media (min-width:900px){.svhint{display:none}}
+.tablewrap{overflow-x:auto}
+table.matrix{border-collapse:collapse;width:100%;font-size:13px;min-width:560px}
+table.matrix th,table.matrix td{padding:7px 9px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+table.matrix thead th{font-family:var(--mono);font-size:11px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+table.matrix tbody th{font-weight:600}
+table.matrix td.num{text-align:center;font-family:var(--mono);font-variant-numeric:tabular-nums;width:11%}
+table.matrix td.has{background:var(--accent-soft);font-weight:600}
+table.matrix tr.gap th{color:var(--crit)}
+table.matrix tr.thin th{color:var(--warn)}
+table.ftable{min-width:760px}
+ul.tree{list-style:none;margin:6px 0 0;padding-left:22px;border-left:1px dashed var(--line);display:flex;flex-direction:column;gap:8px}
+ul.tree.root{padding-left:0;border-left:0;margin:0}
+.pnode{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+ul.tree ul.tree>li>.pnode>span:first-child::before{content:"\21B3\00a0";color:var(--muted)}
+.pnode .title{font-weight:600}
+.pollb{color:var(--accent);font-weight:600}
+.empty{padding:22px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:10px;font-size:14px}
+footer.about{font-size:13px;color:var(--muted);border-top:1px solid var(--line);padding-top:16px;display:flex;flex-direction:column;gap:6px}
+
+@media (max-width:760px){
+  .grid2,.grid2.gridreg{grid-template-columns:1fr}
+  form.f{grid-template-columns:1fr}
+  .when{width:78px}
+  header.top{position:static}
+}
+@media (prefers-reduced-motion:no-preference){ .item,.card{transition:background .15s} }
+</style>
+
+</head>
+<body>
+<header class="top">
+  <div class="gut"><div class="inner">
+    <div class="brand">
+      <h1>Traceability Alignment Hub</h1>
+      <span class="tag">Prototype</span>
+      <p class="sub">The shared base for building interoperable supply-chain data: see what already exists and build on it, tackle shared hurdles together, follow the rules that are coming, and show funders what their money is moving.</p>
+    </div>
+    <nav class="tabs" id="tabs" aria-label="Sections"></nav>
+  </div></div>
+</header>
+<div class="filterbar"><div class="gut"><div class="inner">
+  <div class="row">
+    <button class="fbtn" id="fb-sector" aria-expanded="false" aria-controls="fpanel">Industry <span class="n" hidden></span></button>
+    <button class="fbtn" id="fb-region" aria-expanded="false" aria-controls="fpanel">Region <span class="n" hidden></span></button>
+    <button class="fbtn" id="fb-commodity" aria-expanded="false" aria-controls="fpanel">Commodity <span class="n" hidden></span></button>
+    <input class="search" id="q" type="search" placeholder="Search everything" aria-label="Search">
+    <button class="clear" id="clearf" hidden>Clear filters</button>
+  </div>
+  <div class="fpanel" id="fpanel" hidden></div>
+</div></div></div>
+
+<main class="gut"><div class="inner" id="main"></div></main>
+
+<script>window.__SNAPSHOT={"regs": [{"checked": "2026-11-03", "commodities": ["Battery minerals"], "jurisdiction": "EU", "kind": "Regulation", "milestones": [{"date": "2027-02-18", "label": "Battery passport becomes mandatory"}], "name": "EU Battery Regulation: battery passport", "regions": ["EU"], "sectors": ["Batteries and minerals"], "short": "Battery passport", "source": "European Circular Economy Stakeholder Platform, Oct 2026", "status": "Applies Feb 2027", "statusClass": "pending", "summary": "Electric vehicle, light transport and industrial batteries over 2 kWh must carry a digital battery passport. The first mandatory product passport in the EU, and a test case for every other sector.", "url": "https://circulareconomy.europa.eu/node/10371", "id": "battery"}, {"checked": "2026-11-03", "commodities": [], "jurisdiction": "EU", "kind": "Regulation", "milestones": [{"date": "2028-07-26", "label": "Member States must transpose"}, {"date": "2029-07-26", "label": "Companies must comply"}], "name": "EU Corporate Sustainability Due Diligence Directive, as amended by Omnibus I", "regions": ["EU"], "sectors": ["Cross-sector"], "short": "CSDDD", "source": "Clifford Chance, Feb 2026", "status": "Amended Feb 2026", "statusClass": "proposed", "summary": "Human-rights and environmental due diligence for companies with over 5,000 employees and EUR 1.5bn turnover. Omnibus I cut the number of companies in scope by about 70%, dropped the climate transition plan, and capped information requests to smaller suppliers.", "url": "https://www.cliffordchance.com/insights/resources/blogs/business-and-human-rights-insights/2026/02/omnibus-i-the-european-union-concludes-csddd-and-csrd-reforms.html", "id": "csddd"}, {"checked": "2026-11-03", "commodities": ["Cotton"], "jurisdiction": "EU", "kind": "Regulation", "milestones": [{"date": "2026-07-20", "label": "EU product passport registry operational"}, {"date": "2027-12", "label": "Textiles delegated act expected during 2027"}, {"date": "2028-01", "label": "Requirements for priority sectors phase in, 2028 to 2030"}], "name": "EU Digital Product Passport (Ecodesign for Sustainable Products Regulation)", "regions": ["EU"], "sectors": ["Textiles and leather", "Cross-sector"], "short": "EU product passports", "source": "European Circular Economy Stakeholder Platform, Oct 2026", "status": "Registry live", "statusClass": "live", "summary": "Products in priority groups will carry a digital passport with sustainability and traceability data. The EU registry opened on 20 July 2026. Requirements for textiles, furniture and electronics are expected to phase in from 2028 to 2030.", "url": "https://circulareconomy.europa.eu/node/10371", "id": "dpp"}, {"checked": "2026-11-03", "commodities": ["Cattle", "Cocoa", "Coffee", "Palm oil", "Rubber", "Soy", "Timber and pulp"], "jurisdiction": "EU", "kind": "Regulation", "milestones": [{"date": "2026-12-30", "label": "Applies to large and medium operators"}, {"date": "2027-06-30", "label": "Applies to other micro and small operators"}, {"date": "2027-12-30", "label": "Soluble coffee and some palm oil derivatives come into scope"}], "name": "EU Deforestation Regulation (EUDR)", "regions": ["EU"], "sectors": ["Agri-food", "Forestry"], "short": "EUDR", "source": "European Commission, 13 Jul 2026", "status": "Applies Dec 2026", "statusClass": "pending", "summary": "Operators placing cattle, cocoa, coffee, palm oil, rubber, soy and wood products on the EU market must file due diligence statements, with plot geolocation, through the EU Information System. The May 2026 simplification package confirmed there will be no further delay.", "url": "https://environment.ec.europa.eu/news/commission-updates-product-scope-and-tools-support-eudr-2026-07-13_en", "id": "eudr"}, {"checked": "2026-11-03", "commodities": [], "jurisdiction": "EU", "kind": "Regulation", "milestones": [{"date": "2026-09-03", "label": "Commission guidelines published"}, {"date": "2027-12-14", "label": "Regulation applies"}], "name": "EU Forced Labour Regulation", "regions": ["EU"], "sectors": ["Cross-sector"], "short": "EU forced labour ban", "source": "Mayer Brown, Sep 2026", "status": "Applies Dec 2027", "statusClass": "pending", "summary": "Bans products made with forced labour from the EU market, across all products and sectors. Commission guidelines were published on 3 September 2026. The forced labour risk database is still being built.", "url": "https://www.mayerbrown.com/en/insights/publications/2026/09/a-practical-roadmap-for-compliance-with-the-eu-forced-labour-regulation", "id": "euflr"}, {"checked": "2026-11-03", "commodities": ["Seafood"], "jurisdiction": "North America", "kind": "Regulation", "milestones": [{"date": "2028-07-20", "label": "Compliance date"}], "name": "US FDA Food Traceability Rule (FSMA 204)", "regions": ["North America"], "sectors": ["Agri-food", "Seafood"], "short": "FSMA 204", "source": "NC State Extension, May 2026", "status": "Compliance Jul 2028", "statusClass": "pending", "summary": "Companies handling foods on the FDA's Food Traceability List must record key data elements for critical tracking events and provide records within 24 hours. The FDA moved compliance back 30 months.", "url": "https://foodbusiness.ces.ncsu.edu/news/fda-fsma-204-food-traceability-rule-july-20-2028/", "id": "fsma204"}, {"checked": "2026-11-03", "commodities": ["Seafood"], "jurisdiction": "Global", "kind": "Standard", "milestones": [{"date": "2026-07-01", "label": "Version 2.0 scheduled launch"}], "name": "GDST Standard 2.0", "regions": ["Global"], "sectors": ["Seafood"], "short": "GDST 2.0", "source": "Fish Focus, May 2026", "status": "Version 2.0", "statusClass": "live", "summary": "Seafood traceability standard built on key data elements and GS1 EPCIS events. Version 2.0 makes it modular, so other commodities in seafood supply chains, such as aquafeed ingredients, can be included.", "url": "https://fishfocus.co.uk/gdst-standard-update/", "id": "gdst2"}, {"checked": "2026-11-03", "commodities": ["Cattle", "Leather"], "jurisdiction": "South America", "kind": "National system", "milestones": [{"date": "2026-12-31", "label": "State systems aligned with the national database"}, {"date": "2027-01-01", "label": "Individual ID for animals in sanitary or approved private protocols"}, {"date": "2033-01-01", "label": "Moving unidentified cattle prohibited"}], "name": "Brazil national cattle identification plan (PNIB)", "regions": ["South America"], "sectors": ["Agri-food"], "short": "Brazil PNIB", "source": "Minerva Foods, summary of Ordinance SDA/MAPA 1,331", "status": "Rolling out", "statusClass": "pending", "summary": "Moves Brazil from batch to individual identification of cattle and buffalo, backed by a national central database. A key source of evidence for beef under the EUDR.", "url": "https://myminerva.minervafoods.com/en/by-2032-the-entire-brazilian-cattle-herd-must-be-individually-tracked/", "id": "pnib"}, {"checked": "2026-11-03", "commodities": ["Cattle", "Cocoa", "Coffee", "Palm oil", "Rubber", "Soy", "Timber and pulp"], "jurisdiction": "UK", "kind": "Regulation", "milestones": [{"date": "2026-12", "label": "Further consultation expected during 2026"}, {"date": "2027-12", "label": "Legislation expected during 2027"}], "name": "UK Forest Risk Commodities regime", "regions": ["UK"], "sectors": ["Agri-food", "Forestry"], "short": "UK forest risk regime", "source": "Mayer Brown, Aug 2026", "status": "Consultation pending", "statusClass": "proposed", "summary": "Schedule 17 of the Environment Act 2021 would stop large businesses using illegally produced forest-risk commodities. The government plans to match the EUDR commodity list. Draft regulations are not yet published.", "url": "https://www.mayerbrown.com/zh-hans/insights/publications/2026/08/the-uk-forest-risk-commodity-regulation-wood-they-or-wouldnt-they", "id": "ukfrc"}, {"checked": "2026-11-03", "commodities": [], "jurisdiction": "Global", "kind": "Standard", "milestones": [], "name": "UN Transparency Protocol (UNTP)", "regions": ["Global"], "sectors": ["Cross-sector"], "short": "UNTP", "source": "UNTP specification site", "status": "Version 0.7", "statusClass": "proposed", "summary": "Open UN/CEFACT standard for exchanging verifiable data about products, facilities and conformity, using digital product passports and verifiable credentials. Free to use under CC BY 4.0.", "url": "https://spec-untp-fbb45f.opensource.unicc.org/", "id": "untp"}], "news": [{"commodities": [], "createdBy": "curated", "date": "2026-10-09", "example": false, "kind": "Regulation", "regions": ["EU"], "sectors": ["Cross-sector", "Textiles and leather", "Batteries and minerals"], "source": "European Circular Economy Stakeholder Platform", "summary": "The product passport registry has been running since 20 July 2026. Battery passports become mandatory on 18 February 2027, and the textiles act is expected in 2027.", "title": "EU sets out product passport timeline to 2030", "url": "https://circulareconomy.europa.eu/node/10371", "id": "n-dpp-timeline"}, {"commodities": ["Cattle", "Cocoa", "Coffee", "Palm oil", "Rubber", "Soy", "Timber and pulp"], "createdBy": "curated", "date": "2026-09-25", "example": false, "kind": "Regulation", "regions": ["EU"], "sectors": ["Agri-food", "Forestry"], "source": "Coolset, updated 25 Sep 2026", "summary": "No further delay. Implementing Regulation 2026/1565 adds simplified declarations and automated APIs to the Information System. National authorities' enforcement duties began on 30 June.", "title": "EUDR deadline holds at 30 December 2026", "url": "https://www.coolset.com/academy/the-eu-deforestation-regulation-eudr-what-businesses-need-to-know-and-do", "id": "n-eudr-holds"}, {"commodities": ["Coffee", "Palm oil", "Leather", "Rubber"], "createdBy": "curated", "date": "2026-07-13", "example": false, "kind": "Regulation", "regions": ["EU"], "sectors": ["Agri-food", "Forestry"], "source": "European Commission", "summary": "Soluble coffee and some palm oil derivatives join from 30 December 2027; leather, retreaded tyres and some rubber goods leave. New rules add simplified declarations for micro and small primary operators and updated API specifications.", "title": "Commission adopts EUDR scope update and Information System rules", "url": "https://environment.ec.europa.eu/news/commission-updates-product-scope-and-tools-support-eudr-2026-07-13_en", "id": "n-eudr-scope"}, {"commodities": ["Cattle", "Cocoa", "Coffee", "Palm oil", "Rubber", "Soy", "Timber and pulp"], "createdBy": "curated", "date": "2026-05-04", "example": false, "kind": "Regulation", "regions": ["EU"], "sectors": ["Agri-food", "Forestry"], "source": "Herbert Smith Freehills Kramer", "summary": "The Commission estimates the changes cut annual compliance costs by about 75%. Databases of country legislation and certification schemes are promised before 30 December 2026.", "title": "EUDR simplification package: no third delay", "url": "https://www.hlc.com/en/publications/eu-deforestation-regulation-commission-publishes-simplification-package-ahead-of-december-2026", "id": "n-eudr-simplify"}, {"commodities": [], "createdBy": "curated", "date": "2026-09-15", "example": false, "kind": "Funding and calls", "regions": ["EU"], "sectors": ["Cross-sector"], "source": "Mayer Brown", "summary": "Guidelines were published on 3 September. A Commission tender for supply-chain traceability and forced-labour risk-detection pilots closed on 28 September, a sign of where EU funding is going.", "title": "EU forced labour guidelines out; traceability pilot tender closes", "url": "https://www.mayerbrown.com/en/insights/publications/2026/09/a-practical-roadmap-for-compliance-with-the-eu-forced-labour-regulation", "id": "n-flr-guidelines"}, {"commodities": ["Seafood"], "createdBy": "curated", "date": "2026-05-07", "example": false, "kind": "Standards", "regions": ["Global"], "sectors": ["Seafood"], "source": "Fish Focus", "summary": "Version 2.0 was scheduled for 1 July 2026. It opens the seafood standard to other commodities in seafood supply chains, such as aquafeed: an early example of the commodity-module model.", "title": "GDST consults on modular Standard 2.0", "url": "https://fishfocus.co.uk/gdst-standard-update/", "id": "n-gdst2"}, {"commodities": ["Cattle", "Leather", "Rubber"], "createdBy": "curated", "date": "2026-09-18", "example": false, "kind": "Regulation", "regions": ["EU"], "sectors": ["Agri-food", "Textiles and leather"], "source": "Coolset, updated 25 Sep 2026", "summary": "Coolset reports that Delegated Regulation 2026/2102 took effect on 18 September, removing cattle hides, skins and leather and some rubber goods. This changes the regulatory driver for the beef and leather framework.", "title": "Cattle leather reported out of EUDR scope", "url": "https://www.coolset.com/academy/the-eu-deforestation-regulation-eudr-what-businesses-need-to-know-and-do", "id": "n-leather-out"}, {"commodities": [], "createdBy": "curated", "date": "2026-02", "example": false, "kind": "Regulation", "regions": ["EU"], "sectors": ["Cross-sector"], "source": "Clifford Chance", "summary": "Thresholds rise to 5,000 employees and EUR 1.5bn turnover, and compliance moves to July 2029. Information requests to smaller suppliers are capped, which raises the value of shared, reusable supply-chain data.", "title": "Omnibus I narrows the EU due diligence directive", "url": "https://www.cliffordchance.com/insights/resources/blogs/business-and-human-rights-insights/2026/02/omnibus-i-the-european-union-concludes-csddd-and-csrd-reforms.html", "id": "n-omnibus"}, {"commodities": ["Cattle", "Cocoa", "Coffee", "Palm oil", "Rubber", "Soy", "Timber and pulp"], "createdBy": "curated", "date": "2026-08-03", "example": false, "kind": "Regulation", "regions": ["UK"], "sectors": ["Agri-food", "Forestry"], "source": "Mayer Brown", "summary": "The government plans to match the EUDR commodity list. A consultation is due in 2026 and legislation in 2027, though ministerial changes may delay it.", "title": "UK forest risk rules still awaiting draft regulations", "url": "https://www.mayerbrown.com/zh-hans/insights/publications/2026/08/the-uk-forest-risk-commodity-regulation-wood-they-or-wouldnt-they", "id": "n-uk-frc"}], "initiatives": [{"buildsOn": ["untp", "gtfbl"], "commodities": ["Coffee"], "createdBy": "curated", "example": true, "funders": "", "fundingStatus": "Not known", "lead": "To confirm", "lessons": "", "name": "Coffee EUDR interoperability pilot", "next": "Start coordination: verify user needs and define the minimum viable activity", "objectives": "Interoperable plot and farmer data across public and private platforms in coffee, through agreed identifiers and open standards.", "regions": ["South America", "Africa"], "sectors": ["Agri-food"], "stage": "In development", "tech": "UNTP and existing tools", "themes": ["Technical standards", "Privacy and trust", "Participation in governance"], "timeline": "Planned, not yet started", "type": "Pilot", "updates": [], "url": "", "id": "coffee-pilot"}, {"buildsOn": [], "commodities": [], "createdBy": "curated", "example": true, "funders": "", "fundingStatus": "Not known", "lead": "To confirm", "lessons": "", "name": "Digital Integration of Agricultural Supply Chains Alliance (DIASCA)", "next": "To confirm", "objectives": "Named in the coffee concept note, alongside SASI and GIZ. Details to confirm.", "regions": ["Global"], "sectors": ["Agri-food"], "stage": "", "tech": "", "themes": [], "timeline": "", "type": "Convening body", "updates": [], "url": "", "id": "diasca"}, {"buildsOn": [], "commodities": [], "createdBy": "curated", "example": true, "funders": "European Commission", "fundingStatus": "Funded", "lead": "European Commission", "lessons": "", "name": "EU Digital Product Passport registry", "next": "Battery passports mandatory", "objectives": "Central registry linking products to their digital passports.", "regions": ["EU"], "sectors": ["Cross-sector", "Batteries and minerals", "Textiles and leather"], "stage": "Live", "tech": "Registry of product passport identifiers under ecodesign rules", "themes": ["Technical standards"], "timeline": "18 Feb 2027", "type": "Platform or tool", "updates": [], "url": "https://circulareconomy.europa.eu/node/10371", "id": "dpp-registry"}, {"buildsOn": [], "commodities": ["Cattle", "Cocoa", "Coffee", "Palm oil", "Rubber", "Soy", "Timber and pulp"], "createdBy": "curated", "example": true, "funders": "European Commission", "fundingStatus": "Funded", "lead": "European Commission", "lessons": "", "name": "EUDR Information System", "next": "Contingency arrangements for outages due by 30 December 2026", "objectives": "Receives operators' due diligence statements and geolocation data under the EUDR.", "regions": ["EU"], "sectors": ["Agri-food", "Forestry"], "stage": "Live", "tech": "Due diligence statements, simplified declarations, automated APIs", "themes": ["Verification and assurance"], "timeline": "Dec 2026", "type": "Platform or tool", "updates": [], "url": "https://environment.ec.europa.eu/news/commission-updates-product-scope-and-tools-support-eudr-2026-07-13_en", "id": "eudr-is"}, {"buildsOn": [], "commodities": [], "createdBy": "curated", "example": true, "funders": "", "fundingStatus": "Not known", "lead": "Producer and consumer governments; launched by the UK and Indonesia at COP26", "lessons": "", "name": "FACT Dialogue (Forest, Agriculture and Commodity Trade)", "next": "Independent evaluation of 2021 to 2026", "objectives": "Government-to-government dialogue on sustainable trade in agricultural commodities.", "regions": ["Global"], "sectors": ["Agri-food", "Forestry"], "stage": "Live", "tech": "", "themes": ["Participation in governance"], "timeline": "2026", "type": "Convening body", "updates": [], "url": "https://community.globallandscapesforum.org/job/consultant-independent-evaluation-and-strategic-review-of-the-forest-agriculture-and-commodity-trade-fact-dialogue-2021-2026", "id": "fact"}, {"buildsOn": [], "commodities": ["Palm oil", "Soy", "Timber and pulp"], "createdBy": "curated", "example": true, "funders": "", "fundingStatus": "Not known", "lead": "Consumer Goods Forum", "lessons": "Replaced a missed 2010 pledge that relied on certification and individual supply chains, moving to collective action with commodity roadmaps and KPIs.", "name": "Forest Positive Coalition of Action", "next": "To confirm", "objectives": "Collective action by consumer goods companies on deforestation, with commodity roadmaps and KPIs. Launched in 2020 after the 2010 zero-deforestation pledge was missed.", "regions": ["Global"], "sectors": ["Agri-food", "Forestry"], "stage": "Live", "tech": "", "themes": ["Incentive structures"], "timeline": "", "type": "Convening body", "updates": [], "url": "https://www.foodnavigator.com/Article/2020/09/24/Food-giants-launch-new-deforestation-pledge-after-missing-2020-objectives-Our-approach-was-not-agile-enough", "id": "fpc"}, {"buildsOn": [], "commodities": ["Seafood"], "createdBy": "curated", "example": true, "funders": "Gordon and Betty Moore Foundation supported the launch in 2017", "fundingStatus": "Not known", "lead": "GDST, an independent industry-led foundation", "lessons": "Three years of facilitated, pre-competitive dialogue, with about a dozen workshops, before the standard was released in 2020. It was then relaunched as an independent, industry-led organisation.", "name": "Global Dialogue on Seafood Traceability (GDST)", "next": "Standard 2.0: a modular standard extending to commodities in seafood supply chains, such as aquafeed", "objectives": "A common language for seafood traceability, using data that is reliable and affordable. More than 100 companies in 30 countries adopted or endorsed it by 2022.", "regions": ["Global"], "sectors": ["Seafood"], "stage": "Scaled", "tech": "Key data elements and GS1 EPCIS events", "themes": ["Technical standards", "Governance practices", "Verification and assurance"], "timeline": "2026", "type": "Standard", "updates": [], "url": "https://fishfocus.co.uk/gdst-standard-update/", "id": "gdst"}, {"buildsOn": ["gdst"], "commodities": ["Cattle", "Leather"], "createdBy": "curated", "example": true, "funders": "", "fundingStatus": "Not known", "lead": "WWF, IFT and Better Food Future", "lessons": "Reuses GDST's commodity-agnostic core and adapts its capability test for solution providers.", "name": "Global Traceability Framework for Beef and Leather (GTFBL)", "next": "Wider adoption and long-term governance", "objectives": "A voluntary, interoperable framework for consistent traceability practice across global beef and leather supply chains.", "regions": ["Global", "South America"], "sectors": ["Agri-food", "Textiles and leather"], "stage": "Pilot", "tech": "Shared Global Traceability Framework core, event-based", "themes": ["Technical standards", "Verification and assurance"], "timeline": "To confirm", "type": "Standard", "updates": [], "url": "", "id": "gtfbl"}, {"buildsOn": [], "commodities": ["Cattle", "Leather"], "createdBy": "curated", "example": true, "funders": "", "fundingStatus": "Not known", "lead": "Brazil Ministry of Agriculture and Livestock (MAPA)", "lessons": "", "name": "Brazil national cattle identification plan (PNIB)", "next": "State systems aligned with the national database", "objectives": "Individual identification and movement tracking of cattle and buffalo across Brazil.", "regions": ["South America"], "sectors": ["Agri-food"], "stage": "In development", "tech": "National central database of individual animal IDs", "themes": ["Technical standards"], "timeline": "Dec 2026; whole herd by 2032", "type": "National system", "updates": [], "url": "https://myminerva.minervafoods.com/en/by-2032-the-entire-brazilian-cattle-herd-must-be-individually-tracked/", "id": "pnib"}, {"buildsOn": [], "commodities": [], "createdBy": "curated", "example": true, "funders": "", "fundingStatus": "Not known", "lead": "Preferred by Nature", "lessons": "", "name": "Traceability Tools Navigator", "next": "Map tools that support the Global Traceability Framework modules", "objectives": "Helps companies and others find traceability tools that fit their use case.", "regions": ["Global"], "sectors": ["Cross-sector"], "stage": "Live", "tech": "", "themes": ["Technical standards"], "timeline": "", "type": "Platform or tool", "updates": [], "url": "https://ttnavigator.org/", "id": "ttnavigator"}, {"buildsOn": ["untp"], "commodities": [], "createdBy": "curated", "example": true, "funders": "", "fundingStatus": "Seeking funding", "lead": "UNECE Team of Specialists", "lessons": "", "name": "UNECE agri-food sectoral forum", "next": "Agree the roadmap, steering group and first sector forum", "objectives": "Neutral convening to align agri-food initiatives on interoperable access to product and sustainability data.", "regions": ["Global"], "sectors": ["Agri-food", "Cross-sector"], "stage": "Concept", "tech": "UNTP-aligned common core", "themes": ["Governance practices", "Participation in governance", "Incentive structures"], "timeline": "Draft roadmap Nov 2026", "type": "Convening body", "updates": [], "url": "", "id": "unece-forum"}, {"buildsOn": [], "commodities": [], "createdBy": "curated", "example": true, "funders": "", "fundingStatus": "Not known", "lead": "UN/CEFACT, UNECE", "lessons": "", "name": "UN Transparency Protocol (UNTP)", "next": "Finalise version 0.7 as a UN/CEFACT standard; sector extensions such as agri-food and forestry", "objectives": "An open interoperability standard for exchanging verifiable data about products, facilities and conformity, without a central database.", "regions": ["Global"], "sectors": ["Cross-sector"], "stage": "In development", "tech": "Verifiable credentials, digital product passports, digital facility records", "themes": ["Technical standards", "Verification and assurance", "Privacy and trust"], "timeline": "To confirm", "type": "Standard", "updates": [], "url": "https://spec-untp-fbb45f.opensource.unicc.org/", "id": "untp"}], "hurdles": [{"category": "Awareness", "commodities": [], "createdBy": "curated", "detail": "Suppliers asked to adopt interoperability often don't understand what is being asked of them.", "example": true, "regions": [], "sectors": [], "source": "Forum roadmap annex", "title": "Low awareness of interoperability and its benefits", "id": "h-awareness"}, {"category": "Rivalry between initiatives", "commodities": [], "createdBy": "curated", "detail": "Finite time and budgets force organisations to choose between initiatives.", "example": true, "regions": [], "sectors": [], "source": "Forum roadmap annex", "title": "Joining one initiative means dropping another", "id": "h-choose"}, {"category": "Funding", "commodities": [], "createdBy": "curated", "detail": "Stakeholders are many and fragmented, and the bodies that coordinate across countries are small and poorly funded.", "example": true, "regions": [], "sectors": [], "source": "Forum roadmap", "title": "Small, under-resourced coordination bodies", "id": "h-coordination"}, {"category": "Incentives and business case", "commodities": [], "createdBy": "curated", "detail": "Most organisations say they will wait until their other customers ask for the same thing.", "example": true, "poll": {"n": 56, "q": "Unclear business value or return on investment for interoperability", "score": 14}, "regions": [], "sectors": [], "source": "Forum roadmap annex; stakeholder poll", "title": "No short-term business case unless others move first", "id": "h-firstmover"}, {"category": "Governance and data rights", "commodities": [], "createdBy": "curated", "detail": "When it is unclear who can see and use data, willingness to share drops quickly.", "example": true, "regions": [], "sectors": [], "source": "Forum roadmap", "title": "Unclear data governance, rights and responsibilities", "id": "h-governance"}, {"category": "Identifiers and technical fit", "commodities": [], "createdBy": "curated", "detail": "Identifiers differ across platforms and countries, so data cannot be joined up.", "example": true, "poll": {"n": 56, "q": "Most critical barriers to interoperability for EUDR outcomes", "score": 15}, "regions": [], "sectors": [], "source": "Forum roadmap annex; coffee concept note; stakeholder poll", "title": "Plot, farmer and facility identifiers are not aligned", "id": "h-ids"}, {"category": "Awareness", "commodities": [], "createdBy": "curated", "detail": "Each function must be convinced before investment beats other priorities, and that takes time.", "example": true, "regions": [], "sectors": [], "source": "Forum roadmap", "title": "Uptake needs several internal departments to agree", "id": "h-internal"}, {"category": "Lock-in to existing systems", "commodities": [], "createdBy": "curated", "detail": "Uptake tends to come only when systems are replaced or contracts end, such as three-year contracts with identifier providers.", "example": true, "regions": [], "sectors": [], "source": "Forum roadmap annex", "title": "Locked into existing systems and contracts", "id": "h-lockin"}, {"category": "Regulation", "commodities": [], "createdBy": "curated", "detail": "Compliance systems are built for one-off submission rather than reuse of interoperable data.", "example": true, "regions": [], "sectors": [], "source": "Forum roadmap", "title": "Regulators' systems don't yet accept UNTP-aligned data", "id": "h-regtools"}, {"category": "Producer-country capacity", "commodities": [], "createdBy": "curated", "detail": "First-mile actors are asked to supply data with little return.", "example": true, "regions": [], "sectors": [], "source": "Coffee concept note", "title": "Smallholders bear the cost without a clear benefit", "id": "h-smallholders"}, {"category": "Identifiers and technical fit", "commodities": [], "createdBy": "curated", "detail": "GS1 EPCIS events (used by GDST and the beef and leather framework) and UNTP credentials have no agreed mapping or owner.", "example": true, "regions": [], "sectors": [], "source": "Comments on the working documents", "title": "Event data and verifiable credentials have no agreed bridge", "id": "h-twomodels"}, {"category": "Incentives and business case", "commodities": [], "createdBy": "curated", "detail": "Organisations often take advice from vendors whose revenue depends on keeping data in their own system.", "example": true, "regions": [], "sectors": [], "source": "Forum roadmap", "title": "Some solution providers' business models resist interoperability", "id": "h-vendors"}, {"category": "Identifiers and technical fit", "commodities": [], "createdBy": "curated", "detail": "Plot boundaries, geolocation and farm records are captured in different ways by different tools.", "example": true, "poll": {"n": 56, "q": "Most critical barriers to interoperability for EUDR outcomes", "score": 10}, "regions": [], "sectors": [], "source": "Stakeholder poll", "theme": "Technical standards", "title": "No common data standards or formats for field data", "id": "p-fieldstandards"}, {"category": "Producer-country capacity", "commodities": [], "createdBy": "curated", "detail": "Asked where EUDR data flow breaks down most (two choices each), 34 of 52 respondents picked farm level and 24 picked aggregators and cooperatives. No other stage scored above 13.", "example": true, "poll": {"n": 52, "q": "Biggest breakdown in the flow and usability of EUDR data", "score": 34}, "regions": [], "sectors": ["Agri-food", "Forestry"], "source": "Stakeholder poll", "theme": "Participation in governance", "title": "Data breaks down at farm and cooperative level", "id": "p-firstmile"}, {"category": "Regulation", "commodities": [], "createdBy": "curated", "detail": "Land tenure, permits and national legal frameworks differ, and there is no shared view of what evidence is enough.", "example": true, "poll": {"n": 56, "q": "Most critical barriers to interoperability for EUDR outcomes", "score": 12}, "regions": [], "sectors": ["Agri-food", "Forestry"], "source": "Stakeholder poll", "theme": "Verification and assurance", "title": "No standard evidence requirements for legality compliance", "id": "p-legality"}, {"category": "Producer-country capacity", "commodities": [], "createdBy": "curated", "detail": "Producer-country systems and company or EU systems run in parallel, so data is collected twice.", "example": true, "poll": {"n": 56, "q": "Most critical barriers to interoperability for EUDR outcomes", "score": 13}, "regions": [], "sectors": [], "source": "Stakeholder poll", "theme": "Technical standards", "title": "National traceability systems aren't integrated with other systems", "id": "p-national"}, {"category": "Identifiers and technical fit", "commodities": [], "createdBy": "curated", "detail": "There is no agreed way to request, send and receive data between systems, even where formats are similar.", "example": true, "poll": {"n": 56, "q": "Most critical barriers to interoperability for EUDR outcomes", "score": 19}, "regions": [], "sectors": [], "source": "Stakeholder poll", "theme": "Technical standards", "title": "No common data-sharing protocols", "id": "p-protocols"}, {"category": "Regulation", "commodities": [], "createdBy": "curated", "detail": "Satellite data, cut-off dates and mitigation methods vary, so the same plot can be judged differently.", "example": true, "poll": {"n": 56, "q": "Most critical barriers to interoperability for EUDR outcomes", "score": 12}, "regions": [], "sectors": ["Agri-food", "Forestry"], "source": "Stakeholder poll", "theme": "Verification and assurance", "title": "No standard datasets or methods for assessing deforestation risk", "id": "p-riskmethods"}, {"category": "Identifiers and technical fit", "commodities": [], "createdBy": "curated", "detail": "Transaction and shipment data is held in different structures, so it can't be passed along cleanly.", "example": true, "poll": {"n": 56, "q": "Most critical barriers to interoperability for EUDR outcomes", "score": 11}, "regions": [], "sectors": [], "source": "Stakeholder poll", "theme": "Technical standards", "title": "No common data standards or formats for supply-chain data", "id": "p-scstandards"}, {"category": "Lock-in to existing systems", "commodities": [], "createdBy": "curated", "detail": "Tools across the supply chain don't connect, so data has to be re-entered or re-collected at each step.", "example": true, "poll": {"n": 56, "q": "Most critical barriers to interoperability for EUDR outcomes", "score": 23}, "regions": [], "sectors": [], "source": "Stakeholder poll", "theme": "Technical standards", "title": "Traceability tools and platforms are incompatible or siloed", "id": "p-siloed"}, {"category": "Governance and data rights", "commodities": [], "createdBy": "curated", "detail": "National data laws and sovereignty concerns restrict what can be shared across borders.", "example": true, "poll": {"n": 56, "q": "Most critical barriers to interoperability for EUDR outcomes", "score": 8}, "regions": [], "sectors": [], "source": "Stakeholder poll", "theme": "Privacy and trust", "title": "Legal or data-sovereignty limits on sharing data", "id": "p-sovereignty"}, {"category": "Governance and data rights", "commodities": [], "createdBy": "curated", "detail": "Actors hold back data because they fear misuse or see no return for sharing it.", "example": true, "poll": {"n": 56, "q": "Most critical barriers to interoperability for EUDR outcomes", "score": 15}, "regions": [], "sectors": [], "source": "Stakeholder poll", "theme": "Privacy and trust", "title": "Low trust or incentive to share data between supply-chain actors", "id": "p-trust"}, {"category": "Regulation", "commodities": [], "createdBy": "curated", "detail": "Without volume reconciliation, compliant and non-compliant product can mix along the chain.", "example": true, "poll": {"n": 56, "q": "Most critical barriers to interoperability for EUDR outcomes", "score": 3}, "regions": [], "sectors": [], "source": "Stakeholder poll", "theme": "Verification and assurance", "title": "No effective way to control volumes, prevent mixing and verify", "id": "p-volume"}], "ideas": []};</script>
+<script>
+(function(){
+"use strict";
+var SECTORS=["Agri-food","Seafood","Forestry","Textiles and leather","Batteries and minerals","Cross-sector"];
+var REGIONS=["Global","EU","UK","North America","South America","Africa","Asia-Pacific"];
+var COMMODITIES=["Cattle","Leather","Cocoa","Coffee","Palm oil","Rubber","Soy","Timber and pulp","Seafood","Cotton","Battery minerals"];
+var TYPES=["Standard","Platform or tool","National system","Pilot","Convening body"];
+var STAGES=["Concept","In development","Pilot","Live","Scaled"];
+var CATS=["Awareness","Incentives and business case","Governance and data rights","Identifiers and technical fit","Lock-in to existing systems","Regulation","Producer-country capacity","Funding","Rivalry between initiatives"];
+var PROMPTS=["What would make you share data with other initiatives?","What would you need to tell your finance director?","Which meeting or reporting burden could we remove?","Where should the next pilot be?","Something else"];
+var NEWSKINDS=["Regulation","Standards","Industry","Funding and calls"];
+var FUNDING=["Funded","Partly funded","Seeking funding","Not known"];
+var TABS=[["overview","Overview"],["map","Map"],["initiatives","Initiatives"],["progress","Progress and funding"],["hurdles","Hurdles"],["ideas","Ideas"],["regulation","Regulation"],["news","News"]];
+
+var S={initiatives:[],hurdles:[],ideas:[],news:[],regs:[],votes:{},loaded:{},stale:false,
+  db:null,user:null,me:null,canWrite:null,isAdmin:false,readOnly:false,noDb:false,
+  f:{sector:new Set(),region:new Set(),commodity:new Set(),q:""},open:null,confirm:null,msg:{}};
+var MAIN=document.getElementById("main");
+
+function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c];});}
+function arr(v){return Array.isArray(v)?v:[];}
+function today(){var d=new Date();return new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));}
+function pd(s){if(!s)return null;var m=/^(\d{4})-(\d{2})(?:-(\d{2}))?$/.exec(s);if(!m)return null;return m[3]?new Date(Date.UTC(+m[1],+m[2]-1,+m[3])):new Date(Date.UTC(+m[1],+m[2],0));}
+var MON=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+function fmt(s){var d=pd(s);if(!d)return esc(s||"");var hasDay=/^\d{4}-\d{2}-\d{2}$/.test(s);return (hasDay?d.getUTCDate()+" ":"")+MON[d.getUTCMonth()]+" "+d.getUTCFullYear();}
+function daysTo(s){var d=pd(s);if(!d)return null;return Math.round((d-today())/864e5);}
+function rel(n){if(n==null)return"";if(n===0)return"today";if(n>0){if(n<60)return"in "+n+" days";var m=Math.round(n/30.4);if(m<24)return"in "+m+" months";return"in "+Math.round(n/365)+" years";}var a=-n;if(a<60)return a+" days ago";var mm=Math.round(a/30.4);if(mm<24)return mm+" months ago";return Math.round(a/365)+" years ago";}
+
+/* ---------- filters ---------- */
+function hit(item){
+  var f=S.f;
+  function ok(set,vals){if(!set.size)return true;vals=arr(vals);if(!vals.length)return true;for(var i=0;i<vals.length;i++)if(set.has(vals[i]))return true;return false;}
+  if(!ok(f.sector,item.sectors))return false;
+  if(!ok(f.region,item.regions))return false;
+  if(!ok(f.commodity,item.commodities))return false;
+  if(f.q){var hay=JSON.stringify([item.name,item.title,item.text,item.summary,item.objectives,item.lead,item.detail,item.category,item.source,item.next,item.prompt,item.status,item.funders,item.lessons]).toLowerCase();if(hay.indexOf(f.q)<0)return false;}
+  return true;
+}
+function anyFilter(){return S.f.sector.size||S.f.region.size||S.f.commodity.size||S.f.q;}
+var FB={sector:[SECTORS,"fb-sector"],region:[REGIONS,"fb-region"],commodity:[COMMODITIES,"fb-commodity"]};
+function renderFilterBar(){
+  Object.keys(FB).forEach(function(k){var b=document.getElementById(FB[k][1]);var n=b.querySelector(".n");var c=S.f[k].size;n.hidden=!c;n.textContent=c;b.setAttribute("aria-expanded",S.open===k?"true":"false");});
+  var p=document.getElementById("fpanel");
+  if(!S.open){p.hidden=true;p.innerHTML="";}
+  else{p.hidden=false;p.innerHTML=FB[S.open][0].map(function(v){return '<button class="chip" data-f="'+S.open+'" data-v="'+esc(v)+'" aria-pressed="'+(S.f[S.open].has(v)?"true":"false")+'">'+esc(v)+'</button>';}).join("");}
+  document.getElementById("clearf").hidden=!anyFilter();
+}
+Object.keys(FB).forEach(function(k){document.getElementById(FB[k][1]).addEventListener("click",function(){S.open=S.open===k?null:k;renderFilterBar();});});
+document.getElementById("fpanel").addEventListener("click",function(e){var b=e.target.closest(".chip");if(!b)return;var set=S.f[b.dataset.f];var v=b.dataset.v;if(set.has(v))set.delete(v);else set.add(v);renderFilterBar();render();});
+var qT;document.getElementById("q").addEventListener("input",function(e){clearTimeout(qT);var v=e.target.value;qT=setTimeout(function(){S.f.q=v.trim().toLowerCase();renderFilterBar();render();},150);});
+document.getElementById("clearf").addEventListener("click",function(){S.f.sector.clear();S.f.region.clear();S.f.commodity.clear();S.f.q="";document.getElementById("q").value="";S.open=null;renderFilterBar();render();});
+
+/* ---------- tabs ---------- */
+function tab(){var h=(location.hash||"").slice(1);for(var i=0;i<TABS.length;i++)if(TABS[i][0]===h)return h;return "overview";}
+function counts(){return {initiatives:S.initiatives.filter(hit).length,hurdles:S.hurdles.filter(hit).length,ideas:S.ideas.filter(hit).length,regulation:S.regs.filter(hit).length,news:S.news.filter(hit).length};}
+function renderTabs(){var t=tab(),c=counts();document.getElementById("tabs").innerHTML=TABS.map(function(x){var n=c[x[0]];return '<a href="#'+x[0]+'"'+(x[0]===t?' aria-current="page"':'')+'>'+x[1]+(n!=null&&S.loaded[x[0]==="regulation"?"regs":x[0]]?'<span class="ct">'+n+'</span>':'')+'</a>';}).join("");}
+window.addEventListener("hashchange",function(){S.confirm=null;render();window.scrollTo(0,0);});
+
+/* ---------- shared bits ---------- */
+function tags(it){var out=[];arr(it.sectors).forEach(function(v){out.push(v);});arr(it.regions).forEach(function(v){out.push(v);});arr(it.commodities).forEach(function(v){out.push(v);});if(!out.length)return '<span class="t">All industries and regions</span>';return out.map(function(v){return '<span class="t">'+esc(v)+'</span>';}).join("");}
+function who(uid){if(!uid)return "";if(uid==="curated")return '<span>Curated</span>';return '<span data-uid="'+esc(uid)+'">Someone</span>';}
+async function fillNames(){if(!S.user)return;var els=MAIN.querySelectorAll("[data-uid]");if(!els.length)return;var ids=[];els.forEach(function(e){if(ids.indexOf(e.dataset.uid)<0)ids.push(e.dataset.uid);});try{var ps=await S.user.profiles(ids);els.forEach(function(e){var p=ps[e.dataset.uid];e.textContent=p&&p.isMe?"You":(p&&p.name)||"A participant";});}catch(_){}}
+function canChange(it){if(S.readOnly||S.noDb)return false;return S.isAdmin||(S.me&&it.createdBy===S.me);}
+function removeCtl(col,it){if(!canChange(it))return "";var key=col+"/"+it.id;if(S.confirm===key)return '<button class="lnk danger" data-act="del" data-col="'+col+'" data-id="'+esc(it.id)+'">Confirm remove</button> <button class="lnk" data-act="cancel">Keep</button>';return '<button class="lnk danger" data-act="askdel" data-key="'+esc(key)+'">Remove</button>';}
+function seedPill(it){return it.example?'<span class="pill seed" title="Drafted from the working documents and public sources. Please correct or update.">Draft entry</span>':"";}
+function emptyBox(txt){return '<div class="empty">'+txt+'</div>';}
+function loadingOr(name,html){if(S.noDb)return emptyBox("Shared data is not available in this view. Open the hub from its link while signed in to see and add entries.");if(!S.loaded[name])return emptyBox("Loading shared entries…");return html;}
+function tagPicker(name,legend,opts){return '<fieldset class="tagpick full"><legend>'+legend+'</legend><div class="opts">'+opts.map(function(v){return '<label class="chip" style="display:inline-flex;gap:5px;align-items:center"><input type="checkbox" name="'+name+'" value="'+esc(v)+'" style="width:auto;margin:0">'+esc(v)+'</label>';}).join("")+'</div></fieldset>';}
+function tagPickerIds(name,legend,items){var s=items.slice().sort(byName);return '<fieldset class="tagpick full"><legend>'+legend+'</legend><div class="opts">'+s.map(function(it){return '<label class="chip" style="display:inline-flex;gap:5px;align-items:center"><input type="checkbox" name="'+name+'" value="'+esc(it.id)+'" style="width:auto;margin:0">'+esc(it.name)+'</label>';}).join("")+'</div></fieldset>';}
+function byName(a,b){return String(a.name).localeCompare(String(b.name));}
+function stageCls(s){return /Live|Scaled/.test(s)?"live":/Pilot/.test(s)?"pending":"proposed";}
+function nameOf(id){var x=S.initiatives.find(function(i){return i.id===id;});return x?x.name:null;}
+function usedBy(id){return S.initiatives.filter(function(x){return arr(x.buildsOn).indexOf(id)>=0;}).sort(byName);}
+function fundPill(f){f=FUNDING.indexOf(f)>=0?f:"Not known";var c=f==="Funded"?"live":f==="Seeking funding"?"pending":f==="Partly funded"?"proposed":"seed";return '<span class="pill '+c+'">'+esc(f)+'</span>';}
+function sel(name,opts,lab){return '<label>'+lab+'<select name="'+name+'" id="f-'+name+'">'+opts.map(function(o){return '<option>'+esc(o)+'</option>';}).join("")+'</select></label>';}
+function writeNote(){if(S.snapshot)return '<p class="notice">This is a read-only snapshot of the hub, taken on 4 November 2026. Adding entries, updates and votes works in the live version.</p>';if(S.noDb)return '<p class="notice warn">Adding entries needs the shared store, which is not available in this view.</p>';if(S.readOnly)return '<p class="notice warn">You can read this hub but not add to it. Ask the owner for Contributor access.</p>';return "";}
+function form(id,inner,cta){if(S.noDb||S.readOnly)return writeNote();return '<details class="add" id="d-'+id+'"'+(S.msg[id]&&S.msg[id].keep?' open':'')+'><summary>'+cta+'</summary><form class="f" id="'+id+'" novalidate>'+inner+'<div class="full actions"><button class="btn" type="submit">'+cta.replace(/^Add |^Share |^Post /,function(m){return m;})+'</button><span class="'+(S.msg[id]&&S.msg[id].err?"err":"ok")+'" aria-live="polite">'+esc(S.msg[id]?S.msg[id].text:"")+'</span></div></form></details>';}
+
+/* ---------- views ---------- */
+function regNext(r){var ms=arr(r.milestones).slice().sort(function(a,b){return a.date<b.date?-1:1;});var t=today();for(var i=0;i<ms.length;i++){var d=pd(ms[i].date);if(d&&d>=t)return ms[i];}return ms.length?ms[ms.length-1]:null;}
+function allMilestones(list){var out=[];list.forEach(function(r){arr(r.milestones).forEach(function(m){out.push({date:m.date,label:m.label,reg:r});});});out.sort(function(a,b){var x=pd(a.date),y=pd(b.date);return (x?x-0:0)-(y?y-0:0);});return out;}
+function voteCount(kind,id){var n=0;Object.keys(S.votes).forEach(function(u){var v=S.votes[u];if(v&&v[kind]&&v[kind][id])n++;});return n;}
+function myVote(kind,id){var v=S.me&&S.votes[S.me];return !!(v&&v[kind]&&v[kind][id]);}
+function voteBtn(kind,id){var n=voteCount(kind,id),mine=myVote(kind,id);var dis=S.readOnly||S.noDb||!S.me;return '<button class="vote" data-act="vote" data-kind="'+kind+'" data-id="'+esc(id)+'" aria-pressed="'+mine+'"'+(dis?' disabled title="'+(S.snapshot?"Voting works in the live version":"Voting needs Contributor access")+'"':'')+' aria-label="'+(mine?"Remove your vote":"Vote")+', '+n+' votes"><b>'+n+'</b><span>'+(mine?"voted":"vote")+'</span></button>';}
+
+function vOverview(){
+  var regs=S.regs.filter(hit),hs=S.hurdles.filter(hit),ns=S.news.filter(hit),ins=S.initiatives.filter(hit);
+  var t=today();var ms=allMilestones(regs).filter(function(m){var d=pd(m.date);return d&&d>=t;}).slice(0,5);
+  var top=hs.slice().sort(hrank).slice(0,4);
+  var latest=ns.slice().sort(function(a,b){return a.date<b.date?1:-1;}).slice(0,4);
+  var h='<div class="vhead"><div><h2>Overview</h2><p class="muted small">'+(anyFilter()?"Showing what matches your filters.":"Use the filters above to focus on an industry, region or commodity.")+'</p></div></div>';
+  if(S.stale)h+='<p class="notice warn">Shared data can’t be reached right now. What you see may be out of date.</p>';
+  h+='<div class="stats"><div class="stat"><b>'+ins.length+'</b><span>initiatives mapped</span></div><div class="stat"><b>'+hs.length+'</b><span>hurdles raised</span></div><div class="stat"><b>'+S.ideas.filter(hit).length+'</b><span>ideas shared</span></div><div class="stat"><b>'+regs.length+'</b><span>rules and standards tracked</span></div></div>';
+  h+='<div class="grid2">';
+  h+='<section class="panel"><div class="ph"><h3>Next regulatory dates</h3><a href="#regulation">All dates</a></div>'+loadingOr("regs",ms.length?'<div class="list">'+ms.map(function(m){var n=daysTo(m.date);return '<div class="item"><div class="when'+(n!=null&&n<=90?' soon':'')+'"><b>'+fmt(m.date)+'</b><span>'+rel(n)+'</span></div><div class="body"><span class="title">'+esc(m.reg.name)+'</span><span class="small">'+esc(m.label)+'</span></div></div>';}).join("")+'</div>':emptyBox("No upcoming dates match these filters."))+'</section>';
+  h+='<section class="panel"><div class="ph"><h3>Top hurdles</h3><a href="#hurdles">Vote on hurdles</a></div>'+loadingOr("hurdles",top.length?'<div class="list">'+top.map(function(x){return '<div class="item">'+voteBtn("h",x.id)+'<div class="body"><span class="title">'+esc(x.title)+'</span><div class="meta"><span>'+esc(x.category)+'</span>'+pollTag(x)+'</div></div></div>';}).join("")+'</div>':emptyBox("No hurdles yet. Be the first to raise one."))+'</section>';
+  h+='<section class="panel"><div class="ph"><h3>Latest news</h3><a href="#news">All news</a></div>'+loadingOr("news",latest.length?'<div class="list">'+latest.map(newsRow).join("")+'</div>':emptyBox("No news matches these filters."))+'</section>';
+  h+='<section class="panel"><div class="ph"><h3>How to take part</h3></div><ol class="small" style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px"><li><a href="#initiatives">Check your initiative’s entry</a> and correct or add to it.</li><li><a href="#hurdles">Vote on the hurdles</a> that block you most, or raise a new one.</li><li><a href="#ideas">Answer a prompt</a>, such as what would make you share data.</li><li><a href="#news">Share news</a> others should see.</li><li>See the <a href="#map">map</a> of themes, communities and who is working on what.</li><li>Funders: <a href="#progress">see what is funded</a>, how work builds on earlier work, and where the gaps are.</li></ol><p class="small muted">Contribute when it suits you. The steering group reviews the hub before each meeting and reports back on what changed.</p></section>';
+  h+='</div>';
+  return h;
+}
+
+function vInitiatives(){
+  var list=S.initiatives.filter(hit).sort(function(a,b){return String(a.name).localeCompare(String(b.name));});
+  var h='<div class="vhead"><div><h2>Initiatives</h2><p class="muted small">Standards, platforms, national systems, pilots and convening bodies working on interoperable supply-chain data. Entries marked “Draft entry” were drafted from the working documents and public sources: please correct them.</p></div></div>';
+  h+=form("fi",'<label class="full">Name<input name="name" id="fi-name" maxlength="120"></label>'+sel("type",TYPES,"Type")+sel("stage",STAGES,"Stage")+'<label>Lead body<input name="lead" id="fi-lead" maxlength="160"></label><label>Technical basis<input name="tech" id="fi-tech" maxlength="160" placeholder="e.g. UNTP credentials, GS1 EPCIS"></label><label class="full">Objectives<textarea name="objectives" id="fi-obj" maxlength="800"></textarea></label><label>Next milestone<input name="next" id="fi-next" maxlength="200"></label><label>Expected date or timeline<input name="timeline" id="fi-tl" maxlength="80"></label><label class="full">Website<input name="url" id="fi-url" type="url" maxlength="300" placeholder="https://"></label>'+sel("fundingStatus",FUNDING,"Funding status")+'<label>Funders<input name="funders" id="fi-funders" maxlength="200"></label><label class="full">Lessons others could use<textarea name="lessons" id="fi-lessons" maxlength="600"></textarea></label>'+(S.initiatives.length?tagPickerIds("buildsOn","Builds on (which existing work does it reuse?)",S.initiatives):'')+tagPicker("themes","Expert themes it works on",THEMES)+tagPicker("sectors","Industries",SECTORS)+tagPicker("regions","Regions",REGIONS)+tagPicker("commodities","Commodities",COMMODITIES),"Add an initiative");
+  h+=loadingOr("initiatives",list.length?'<div class="cards">'+list.map(function(it){
+    var ups=arr(it.updates);
+    return '<article class="card"><div class="top"><div><h3>'+(it.url?'<a href="'+esc(it.url)+'" target="_blank" rel="noopener">'+esc(it.name)+'</a>':esc(it.name))+'</h3><div class="meta"><span>'+esc(it.type||"")+'</span></div></div><div class="tags" style="justify-content:flex-end">'+(it.stage?'<span class="pill '+(/Live|Scaled/.test(it.stage)?"live":/Pilot/.test(it.stage)?"pending":"proposed")+'">'+esc(it.stage)+'</span>':'')+seedPill(it)+'</div></div>'+
+      (it.objectives?'<p class="small">'+esc(it.objectives)+'</p>':'')+
+      '<dl class="kv">'+(it.lead?'<dt>Lead</dt><dd>'+esc(it.lead)+'</dd>':'')+(it.tech?'<dt>Technical basis</dt><dd>'+esc(it.tech)+'</dd>':'')+(it.next?'<dt>Next</dt><dd>'+esc(it.next)+(it.timeline?' <span class="muted">· '+esc(it.timeline)+'</span>':'')+'</dd>':'')+'<dt>Funding</dt><dd>'+fundPill(it.fundingStatus)+(it.funders?' <span class="muted">'+esc(it.funders)+'</span>':'')+'</dd>'+(arr(it.buildsOn).filter(nameOf).length?'<dt>Builds on</dt><dd>'+arr(it.buildsOn).filter(nameOf).map(function(b){return esc(nameOf(b));}).join(", ")+'</dd>':'')+(usedBy(it.id).length?'<dt>Built on by</dt><dd>'+usedBy(it.id).map(function(x){return esc(x.name);}).join(", ")+'</dd>':'')+(it.lessons?'<dt>Lessons</dt><dd>'+esc(it.lessons)+'</dd>':'')+'</dl>'+
+      '<div class="tags">'+tags(it)+'</div>'+
+      (ups.length?'<div class="updates">'+ups.slice(-3).map(function(u){return '<div><span class="date">'+esc((u.at||"").slice(0,10))+'</span> '+who(u.by)+': '+esc(u.text)+'</div>';}).join("")+'</div>':'')+
+      '<div class="actions">'+((S.readOnly||S.noDb)?'':'<button class="lnk" data-act="upd" data-id="'+esc(it.id)+'">Add an update or correction</button>')+removeCtl("initiatives",it)+'</div>'+
+      (S.upd===it.id?'<form class="f" data-upd="'+esc(it.id)+'" style="padding:0;grid-template-columns:1fr" novalidate><label>Update or correction<textarea name="text" id="upd-'+esc(it.id)+'" maxlength="500"></textarea></label><div class="actions"><button class="btn" type="submit">Post update</button><button class="lnk" type="button" data-act="cancelupd">Cancel</button><span class="err" aria-live="polite">'+esc(S.msg.upd||"")+'</span></div></form>':'')+
+      '</article>';
+  }).join("")+'</div>':emptyBox(S.initiatives.length?"No initiatives match these filters.":"No initiatives yet. Add the first one above."));
+  return h;
+}
+
+var THEMES=["Technical standards","Governance practices","Verification and assurance","Incentive structures","Privacy and trust","Participation in governance"];
+var THEME_DESC={"Technical standards":"Data models, identifiers and the bridges between them, such as GS1 EPCIS events and UNTP credentials.","Governance practices":"How shared standards and data spaces are run, who decides, and how initiatives coordinate.","Verification and assurance":"How data is checked and trusted, including evidence for regulatory compliance.","Incentive structures":"What makes it worth each party's while to take part, and who pays.","Privacy and trust":"Data rights, consent and confidentiality, so that sharing is safe.","Participation in governance":"Bringing producers, smallholders and producer-country governments into decisions."};
+var CAT2THEME={"Identifiers and technical fit":"Technical standards","Lock-in to existing systems":"Technical standards","Governance and data rights":"Privacy and trust","Rivalry between initiatives":"Governance practices","Regulation":"Verification and assurance","Incentives and business case":"Incentive structures","Funding":"Incentive structures","Awareness":"Participation in governance","Producer-country capacity":"Participation in governance"};
+var COMMS=[{id:"agri",name:"Agri-food commodities",sectors:["Agri-food","Seafood","Forestry"],desc:"Commodities under the EUDR and food traceability rules: cattle, cocoa, coffee, palm oil, rubber, soy, timber and seafood."},{id:"textiles",name:"Textiles",sectors:["Textiles and leather"],desc:"Textiles and leather, facing EU digital product passports from 2028."},{id:"metals",name:"Metals and minerals",sectors:["Batteries and minerals"],desc:"Battery minerals and metals. EU battery passports become mandatory on 18 February 2027."},{id:"cross",name:"Shared across sectors",sectors:["Cross-sector"],desc:"Cross-sector standards, registries and tools that every community can reuse."}];
+var INTERESTS=[["benefits","Benefits","What participants gain: lower costs, market access, simpler compliance."],["trust","Trust and data governance","Confidence that shared data is safe, fairly governed and used as agreed."],["align","Alignment and meaning","Seeing how each effort fits the bigger picture, and builds on others."]];
+function themeOf(h){return THEMES.indexOf(h.theme)>=0?h.theme:(CAT2THEME[h.category]||"Governance practices");}
+function commsOf(it){var s=arr(it.sectors),out=[];COMMS.forEach(function(c){if(c.id!=="cross"&&s.some(function(x){return c.sectors.indexOf(x)>=0;}))out.push(c.id);});if(s.indexOf("Cross-sector")>=0||!s.length)out.push("cross");return out;}
+function hv(h){return voteCount("h",h.id);}
+function ps(h){return (h.poll&&h.poll.score)||0;}
+function hrank(a,b){return hv(b)-hv(a)||ps(b)-ps(a)||String(a.title).localeCompare(String(b.title));}
+function pollTag(h){return h.poll?'<span class="pollb">Stakeholder poll: '+h.poll.score+' of '+h.poll.n+'</span>':'';}
+function vl(n){return n+(n===1?" vote":" votes");}
+function isPilotPlus(x){return /Pilot|Live|Scaled/.test(x.stage||"");}
+function mItems(list){if(!list.length)return '';return '<div class="list">'+list.map(function(i){return '<div class="item"><div class="body"><span class="title">'+esc(i.t)+'</span>'+(i.s?'<span class="small">'+esc(i.s)+'</span>':'')+(i.m?'<div class="meta">'+i.m+'</div>':'')+'</div></div>';}).join("")+'</div>';}
+function mapData(){
+  var ins=S.initiatives.filter(hit),hs=S.hurdles.filter(hit),ids=S.ideas.filter(hit);
+  var ups=[];ins.forEach(function(x){arr(x.updates).forEach(function(u){ups.push({t:x.name,s:u.text,m:'<span class="date">'+esc((u.at||"").slice(0,10))+'</span>'});});});
+  var totalVotes=0;Object.keys(S.votes).forEach(function(u){var v=S.votes[u]||{};totalVotes+=Object.keys(v.h||{}).length+Object.keys(v.i||{}).length;});
+  var fin=ids.filter(function(i){return /finance director/.test(i.prompt||"");});
+  var P={
+    poc:{label:"Proofs of concept",side:"L",dir:"out",desc:"Working examples the expert groups can point communities to.",items:ins.filter(isPilotPlus).map(function(x){return {t:x.name,s:x.stage+(x.type?" · "+x.type:"")};}),tab:"initiatives"},
+    guide:{label:"Guidance and options",side:"L",dir:"out",desc:"Practical lessons and options, drawn from initiatives' own experience.",items:ins.filter(function(x){return x.lessons;}).map(function(x){return {t:x.name,s:x.lessons};}),tab:"initiatives"},
+    templ:{label:"Template agreements",side:"L",dir:"out",desc:"Reusable data-sharing and governance agreements that communities can adopt rather than draft from scratch.",items:[],gap:"None mapped yet. Governance lessons recorded by GDST are a candidate starting point.",tab:"initiatives"},
+    exper:{label:"Experiences with use",side:"L",dir:"in",desc:"What communities learn in practice, fed back to the expert groups.",items:ups,gap:"No updates posted yet. Updates added to any initiative appear here.",tab:"progress"},
+    needs:{label:"Needs and constraints",side:"R",dir:"in",desc:"What users say blocks them, ranked by votes.",items:hs.slice().sort(hrank).slice(0,6).map(function(h){return {t:h.title,s:themeOf(h),m:'<span>'+vl(hv(h))+'</span>'+pollTag(h)};}),tab:"hurdles"},
+    consult:{label:"Consultation responses",side:"R",dir:"in",desc:"Ideas and answers to the hub's questions.",items:ids.map(function(i){return {t:i.text,s:i.prompt};}),gap:"No responses yet. Questions are waiting in the Ideas tab.",tab:"ideas"},
+    frame:{label:"Tailored frameworks",side:"R",dir:"out",desc:"Standards and frameworks users can apply to their own sector or commodity.",items:ins.filter(function(x){return x.type==="Standard";}).map(function(x){return {t:x.name,s:x.stage||""};}),tab:"initiatives"},
+    bcase:{label:"Business cases for specific use cases",side:"R",dir:"out",desc:"The case each audience needs to justify taking part.",items:fin.map(function(i){return {t:i.text,s:"Response to: "+i.prompt};}),gap:"None yet. The Ideas tab asks what participants would need to tell their finance director.",tab:"ideas"},
+    endorse:{label:"Peer endorsement",side:"R",dir:"out",desc:"Votes and support from peers, which signal what matters.",items:totalVotes?[{t:totalVotes+" votes cast",s:"On hurdles and ideas across the hub"}]:[],gap:"No votes yet.",tab:"hurdles"},
+    poc2:{label:"Proof of concept",side:"R",dir:"out",desc:"Pilots that show users it works in their context.",items:ins.filter(function(x){return x.type==="Pilot"||x.stage==="Pilot";}).map(function(x){return {t:x.name,s:(x.stage||"")+(x.timeline?" · "+x.timeline:"")};}),tab:"initiatives"}
+  };
+  return {ins:ins,hs:hs,ids:ids,P:P};
+}
+function mapSvg(d,sel){
+  var T={"Technical standards":["Technical","standards"],"Governance practices":["Governance","practices"],"Verification and assurance":["Verification and","assurance"],"Incentive structures":["Incentive","structures"],"Privacy and trust":["Privacy and","trust"],"Participation in governance":["Participation in","governance"]};
+  var o=[];
+  function tx(x,y,s,cls,anchor){return '<text x="'+x+'" y="'+y+'" class="'+cls+'" text-anchor="'+(anchor||"middle")+'">'+esc(s)+'</text>';}
+  function arrow(x1,y,x2){var dir=x2>x1?1:-1;return '<line x1="'+x1+'" y1="'+y+'" x2="'+(x2-dir*7)+'" y2="'+y+'" class="sv-arr"/><path d="M'+(x2-dir*8)+' '+(y-5)+' L'+x2+' '+y+' L'+(x2-dir*8)+' '+(y+5)+'" class="sv-head"/>';}
+  function on(k){return sel===k?' sv-on':'';}
+  o.push('<rect x="20" y="40" width="210" height="590" rx="26" class="sv-lpanel"/>');
+  o.push(tx(125,72,"Expert groups on","sv-ph")+tx(125,92,"specific themes","sv-ph"));
+  THEMES.forEach(function(t,i){var y=112+i*86,n=d.hs.filter(function(x){return themeOf(x)===t;}).length,k="t:"+t;
+    o.push('<g class="sv-click" data-act="mapsel" data-key="'+esc(k)+'" role="button" tabindex="0" aria-label="'+esc(t)+'"><rect x="36" y="'+y+'" width="178" height="70" rx="35" class="sv-theme'+on(k)+'"/>'+tx(125,y+27,T[t][0],"sv-tl")+tx(125,y+45,T[t][1],"sv-tl")+tx(125,y+61,n+(n===1?" hurdle":" hurdles"),"sv-tc")+'</g>');});
+  o.push(tx(370,78,"Interface products","sv-h"));
+  var LP=[["poc",165],["guide",255],["templ",345],["exper",470]];
+  LP.forEach(function(r){var k=r[0],y=r[1],p=d.P[k],n=p.items.length,key="p:"+k,cy=y+24;
+    if(p.dir==="out"){o.push(arrow(234,cy,281)+arrow(457,cy,488));}else{o.push(arrow(488,cy,459)+arrow(281,cy,236));}
+    o.push('<g class="sv-click" data-act="mapsel" data-key="'+key+'" role="button" tabindex="0" aria-label="'+esc(p.label)+'"><rect x="285" y="'+y+'" width="170" height="48" rx="4" class="sv-prod'+(n?'':' sv-gap')+(p.dir==="in"?' sv-in':'')+on(key)+'"/>'+tx(370,y+22,p.label,"sv-pl")+tx(370,y+39,n?(n+" mapped"):"gap","sv-pc"+(n?"":" sv-gapt"))+'</g>');});
+  o.push(tx(645,62,"Engaged stakeholders","sv-ph")+tx(645,82,"and communities","sv-ph"));
+  var CY={agri:470,textiles:180,metals:325};
+  COMMS.forEach(function(c){var list=d.ins.filter(function(x){return commsOf(x).indexOf(c.id)>=0;}),k="c:"+c.id,cs={};list.forEach(function(x){arr(x.commodities).forEach(function(z){cs[z]=1;});});var chips=Object.keys(cs).slice(0,5).join(" · ");
+    if(c.id==="cross"){o.push('<g class="sv-click" data-act="mapsel" data-key="'+k+'" role="button" tabindex="0" aria-label="'+esc(c.name)+'"><rect x="525" y="572" width="240" height="46" rx="23" class="sv-cross'+on(k)+'"/>'+tx(645,592,c.name,"sv-cl2")+tx(645,608,list.length+" initiative"+(list.length===1?"":"s"),"sv-tc")+'</g>');return;}
+    var cy=CY[c.id];o.push('<g class="sv-click" data-act="mapsel" data-key="'+k+'" role="button" tabindex="0" aria-label="'+esc(c.name)+'"><ellipse cx="645" cy="'+cy+'" rx="152" ry="64" class="sv-comm'+on(k)+'"/>'+tx(645,cy-10,c.name,"sv-cl")+tx(645,cy+10,list.length+" initiative"+(list.length===1?"":"s"),"sv-tc")+(chips?tx(645,cy+28,chips,"sv-chip"):"")+'</g>');});
+  o.push(tx(912,78,"Interface products","sv-h"));
+  var RP=[["needs",110],["consult",168],["frame",262],["bcase",320],["endorse",392],["poc2",450]];
+  RP.forEach(function(r){var k=r[0],y=r[1],p=d.P[k],n=p.items.length,key="p:"+k,h=(k==="bcase"?58:48),cy=y+h/2;
+    if(p.dir==="in"){o.push(arrow(825,cy,795));}else{o.push(arrow(1000,cy,1026));}
+    var lab=k==="bcase"?["Business cases for","specific use cases"]:[p.label];
+    o.push('<g class="sv-click" data-act="mapsel" data-key="'+key+'" role="button" tabindex="0" aria-label="'+esc(p.label)+'"><rect x="827" y="'+y+'" width="170" height="'+h+'" rx="4" class="sv-prod'+(n?'':' sv-gap')+(p.dir==="in"?' sv-in':'')+on(key)+'"/>'+lab.map(function(l,i){return tx(912,y+20+i*16,l,"sv-pl");}).join("")+tx(912,y+h-9,n?(n+" mapped"):"gap","sv-pc"+(n?"":" sv-gapt"))+'</g>');});
+  o.push('<rect x="1030" y="40" width="150" height="590" rx="26" class="sv-rpanel"/>');
+  o.push(tx(1105,74,"Users’","sv-rph")+tx(1105,96,"interests","sv-rph"));
+  var UL={benefits:["Benefits"],trust:["Trust and data","governance"],align:["Alignment and","meaning"]};
+  INTERESTS.forEach(function(u,i){var y=150+i*120,k="u:"+u[0],L=UL[u[0]];
+    o.push('<g class="sv-click" data-act="mapsel" data-key="'+k+'" role="button" tabindex="0" aria-label="'+esc(u[1])+'"><rect x="1042" y="'+y+'" width="126" height="76" rx="38" class="sv-user'+on(k)+'"/>'+L.map(function(l,j){return tx(1105,y+(L.length===1?43:34)+j*18,l,"sv-ul");}).join("")+'</g>');});
+  o.push('<polygon points="20,648 1180,648 1164,667 1180,686 20,686 36,667" class="sv-band"/>'+tx(52,672,"Technical / thematic","sv-bt","start")+tx(1148,672,"Outcomes","sv-bt","end"));
+  return '<div class="svwrap"><svg viewBox="0 0 1200 700" class="imapsvg" role="img" aria-label="The sectoral forum as an interface: expert groups on themes, interface products, sector communities and users’ interests">'+o.join("")+'</svg></div>';
+}
+
+function vMap(){
+  var h='<div class="vhead"><div><h2>Map: the forum as an interface</h2><p class="muted small">Based on the “Sectoral forums as an interface” concept. Expert groups on themes on the left, engaged communities in the middle, users’ interests on the right, and the interface products that pass between them. Select any shape to see who is working on it. Dashed boxes are gaps nobody has filled yet.</p></div></div>';
+  if(S.noDb||!S.loaded.initiatives||!S.loaded.hurdles)return h+loadingOr(S.loaded.initiatives?"hurdles":"initiatives","");
+  var d=mapData(),sel=S.mapSel||"";
+  function node(key,cls,label,count){return '<button class="mnode '+cls+'" data-act="mapsel" data-key="'+esc(key)+'" aria-pressed="'+(sel===key)+'"><span class="ml">'+esc(label)+'</span>'+(count!=null?'<span class="mc">'+count+'</span>':'')+'</button>';}
+  function prod(k){var p=d.P[k];var n=p.items.length;var arrow=p.dir==="out"?"→":"←";return '<button class="mprod'+(n?'':' gap')+'" data-act="mapsel" data-key="p:'+k+'" aria-pressed="'+(sel==="p:"+k)+'"><span class="ar" aria-hidden="true">'+(p.side==="L"&&p.dir==="in"?arrow+' ':'')+(p.side==="R"&&p.dir==="in"?arrow+' ':'')+'</span>'+esc(p.label)+(n?' <span class="mc">'+n+'</span>':' <span class="gp">gap</span>')+'<span class="ar" aria-hidden="true">'+(p.dir==="out"?' '+arrow:'')+'</span></button>';}
+  var th='<div class="mcol mthemes"><div class="mh">Expert groups on themes</div>'+THEMES.map(function(t){var n=d.hs.filter(function(x){return themeOf(x)===t;}).length;return node("t:"+t,"theme",t,n+(n===1?" hurdle":" hurdles"));}).join("")+'</div>';
+  var pl='<div class="mcol mprods"><div class="mh">Interface products</div>'+["poc","guide","templ","exper"].map(prod).join("")+'</div>';
+  var cm='<div class="mcol mcomms"><div class="mh">Sector communities</div>'+COMMS.map(function(c){var list=d.ins.filter(function(x){return commsOf(x).indexOf(c.id)>=0;});var cs={};list.forEach(function(x){arr(x.commodities).forEach(function(k){cs[k]=1;});});var chips=Object.keys(cs).slice(0,6);return '<button class="mcomm'+(c.id==="cross"?' cross':'')+'" data-act="mapsel" data-key="c:'+c.id+'" aria-pressed="'+(sel==="c:"+c.id)+'"><span class="ml">'+esc(c.name)+'</span><span class="mc">'+list.length+' initiative'+(list.length===1?'':'s')+'</span>'+(chips.length?'<span class="mchips">'+chips.map(function(k){return '<i>'+esc(k)+'</i>';}).join("")+'</span>':'')+'</button>';}).join("")+'</div>';
+  var pr='<div class="mcol mprods"><div class="mh">Interface products</div>'+["needs","consult","frame","bcase","endorse","poc2"].map(prod).join("")+'</div>';
+  var us='<div class="mcol musers"><div class="mh">Users’ interests</div>'+INTERESTS.map(function(u){return node("u:"+u[0],"user",u[1],null);}).join("")+'</div>';
+  h+='<p class="svhint">Swipe sideways to see the whole map.</p>'+mapSvg(d,sel);
+  h+='<section class="panel mdetail" id="mdetail" aria-live="polite">'+mapDetail(d,sel)+'</section>';
+  return h;
+}
+function mapDetail(d,sel){
+  if(!sel)return '<h3>Select any part of the map</h3><p class="small muted">Themes show the hurdles and initiatives working on them. Communities show the initiatives in each sector, by commodity. Products show what exists and where the gaps are.</p>';
+  var k=sel.slice(2),t=sel.slice(0,1),h='';
+  if(t==="t"){var hs=d.hs.filter(function(x){return themeOf(x)===k;}).sort(hrank);var ins=d.ins.filter(function(x){return arr(x.themes).indexOf(k)>=0;});
+    h='<div class="ph"><h3>'+esc(k)+'</h3><a href="#hurdles">All hurdles</a></div><p class="small muted">'+esc(THEME_DESC[k]||"")+'</p><div class="grid2"><div><h3 class="sub3">Hurdles ('+hs.length+')</h3>'+(hs.length?mItems(hs.map(function(x){return {t:x.title,m:'<span>'+vl(hv(x))+'</span>'+pollTag(x)+'<span>'+esc(x.category||"")+'</span>'};})):emptyBox("No hurdles in this theme yet."))+'</div><div><h3 class="sub3">Initiatives working on it ('+ins.length+')</h3>'+(ins.length?mItems(ins.map(function(x){return {t:x.name,s:(x.stage||"")+(x.type?" · "+x.type:"")};})):emptyBox("No initiative tagged with this theme yet. That may be a gap worth filling."))+'</div></div>';}
+  else if(t==="c"){var c=COMMS.filter(function(x){return x.id===k;})[0];var list=d.ins.filter(function(x){return commsOf(x).indexOf(k)>=0;});var by={};list.forEach(function(x){var cs=arr(x.commodities);if(!cs.length)cs=["Cross-commodity"];cs.forEach(function(cc){(by[cc]=by[cc]||[]).push(x);});});
+    var hs2=d.hs.filter(function(x){var s=arr(x.sectors);return !s.length||s.some(function(y){return c.sectors.indexOf(y)>=0;});}).sort(hrank).slice(0,5);
+    h='<div class="ph"><h3>'+esc(c.name)+'</h3><a href="#initiatives">All initiatives</a></div><p class="small muted">'+esc(c.desc)+'</p><div class="grid2"><div><h3 class="sub3">Initiatives by commodity</h3>'+(list.length?Object.keys(by).sort().map(function(cc){return '<div class="mgroup"><b>'+esc(cc)+'</b><div class="tags">'+by[cc].map(function(x){return '<span class="t">'+esc(x.name)+(x.stage?' · '+esc(x.stage):'')+'</span>';}).join("")+'</div></div>';}).join(""):emptyBox("Nothing mapped in this community yet. Add initiatives so this bubble fills in."))+'</div><div><h3 class="sub3">Top hurdles affecting it</h3>'+(hs2.length?mItems(hs2.map(function(x){return {t:x.title,m:'<span>'+vl(hv(x))+'</span>'+pollTag(x)};})):emptyBox("No hurdles yet."))+'</div></div>';}
+  else if(t==="p"){var p=d.P[k];h='<div class="ph"><h3>'+esc(p.label)+'</h3><a href="#'+p.tab+'">Open '+esc((TABS.filter(function(x){return x[0]===p.tab;})[0]||["",""])[1])+'</a></div><p class="small muted">'+esc(p.desc)+' <b>'+(p.side==="L"?(p.dir==="out"?"Flows from the expert groups to the communities.":"Flows from the communities back to the expert groups."):(p.dir==="out"?"Flows from the communities to users.":"Flows from users to the communities."))+'</b></p>'+(p.items.length?mItems(p.items.slice(0,12)):'<div class="empty">'+esc(p.gap||"Nothing yet.")+'</div>');}
+  else if(t==="u"){var u=INTERESTS.filter(function(x){return x[0]===k;})[0];var rel=[];
+    if(k==="benefits"){rel=d.hs.filter(function(x){return themeOf(x)==="Incentive structures";}).map(function(x){return {t:x.title,m:'<span>'+vl(hv(x))+'</span>'+pollTag(x)};});}
+    else if(k==="trust"){rel=d.hs.filter(function(x){var th=themeOf(x);return th==="Privacy and trust"||th==="Governance practices";}).map(function(x){return {t:x.title,m:'<span>'+vl(hv(x))+'</span>'+pollTag(x)};});}
+    else{rel=d.ins.filter(function(x){return arr(x.buildsOn).length||usedBy(x.id).length;}).map(function(x){var b=arr(x.buildsOn).map(nameOf).filter(Boolean);return {t:x.name,s:b.length?"Builds on "+b.join(", "):"Built on by "+usedBy(x.id).map(function(y){return y.name;}).join(", ")};});}
+    h='<div class="ph"><h3>'+esc(u[1])+'</h3><a href="#'+(k==="align"?"progress":"hurdles")+'">'+(k==="align"?"See pathways":"See hurdles")+'</a></div><p class="small muted">'+esc(u[2])+'</p><h3 class="sub3">'+(k==="align"?"Work that builds on other work":"Related hurdles to solve")+'</h3>'+(rel.length?mItems(rel):emptyBox("Nothing linked yet."));}
+  return h;
+}
+
+function vProgress(){
+  var list=S.initiatives.filter(hit);var inList={};list.forEach(function(x){inList[x.id]=true;});
+  var h='<div class="vhead"><div><h2>Progress and funding</h2><p class="muted small">For participants and funders: how initiatives build on each other, which commodities have gaps, what is funded, and what has moved recently. Everything here comes from the Initiatives tab, so correcting an entry updates this view.</p></div></div>';
+  if(S.noDb||!S.loaded.initiatives)return h+loadingOr("initiatives","");
+  var fc={};FUNDING.forEach(function(f){fc[f]=0;});list.forEach(function(x){var f=FUNDING.indexOf(x.fundingStatus)>=0?x.fundingStatus:"Not known";fc[f]++;});
+  h+='<div class="stats">'+FUNDING.map(function(f){return '<div class="stat"><b>'+fc[f]+'</b><span>'+esc(f==='Not known'?'funding not known':f.toLowerCase())+'</span></div>';}).join("")+'</div>';
+  var kids={};list.forEach(function(x){arr(x.buildsOn).forEach(function(p){if(inList[p])(kids[p]=kids[p]||[]).push(x);});});
+  var hasParent={};list.forEach(function(x){if(arr(x.buildsOn).some(function(p){return inList[p];}))hasParent[x.id]=true;});
+  var roots=list.filter(function(x){return !hasParent[x.id]&&kids[x.id];}).sort(byName);
+  var seen={};
+  function node(x,depth){if(seen[x.id])return '<li><div class="pnode"><span>'+esc(x.name)+'</span><span class="small muted">also shown above</span></div></li>';seen[x.id]=true;var ch=(kids[x.id]||[]).slice().sort(byName);return '<li><div class="pnode"><span class="title">'+esc(x.name)+'</span>'+(x.stage?'<span class="pill '+stageCls(x.stage)+'">'+esc(x.stage)+'</span>':'')+fundPill(x.fundingStatus)+'</div>'+(ch.length?'<ul class="tree">'+ch.map(function(c){return node(c,depth+1);}).join("")+'</ul>':'')+'</li>';}
+  var standalone=list.filter(function(x){return !hasParent[x.id]&&!kids[x.id];}).sort(byName);
+  h+='<section class="panel"><div class="ph"><h3>Pathways: what builds on what</h3></div><p class="small muted">Each branch is work that reuses an earlier standard, core or tool. Longer chains mean more reuse and less duplication, which is the case for funding the shared base.</p>'+(roots.length?'<ul class="tree root">'+roots.map(function(r){return node(r,0);}).join("")+'</ul>':emptyBox("No links yet. Add “Builds on” to an initiative to show its pathway."))+(standalone.length?'<p class="small"><b>Not yet linked:</b> '+standalone.map(function(x){return esc(x.name);}).join(" · ")+'</p>':'')+'</section>';
+  var rows=COMMODITIES.filter(function(c){return !S.f.commodity.size||S.f.commodity.has(c);}).concat(["Cross-commodity"]);
+  function inRow(x,c){var cs=arr(x.commodities);return c==="Cross-commodity"?!cs.length:cs.indexOf(c)>=0;}
+  h+='<section class="panel"><div class="ph"><h3>Coverage by commodity and stage</h3></div><p class="small muted">Number of initiatives at each stage. Commodities with nothing live or scaled are where effort or funding could go next. Some gaps may only be gaps in the map, so add what is missing.</p><div class="tablewrap"><table class="matrix"><thead><tr><th>Commodity</th>'+STAGES.map(function(s){return '<th>'+esc(s)+'</th>';}).join("")+'<th>Total</th></tr></thead><tbody>'+rows.map(function(c){var tot=0;var cells=STAGES.map(function(s){var n=list.filter(function(x){return inRow(x,c)&&x.stage===s;}).length;tot+=n;return '<td class="num'+(n?' has':'')+'">'+(n||'')+'</td>';}).join("");var live=list.filter(function(x){return inRow(x,c)&&/Live|Scaled/.test(x.stage||"");}).length;return '<tr class="'+(tot?(live?'':'thin'):'gap')+'"><th scope="row">'+esc(c)+'</th>'+cells+'<td><b>'+tot+'</b>'+(tot?(live?'':' <span class="small muted">nothing live</span>'):' <span class="small muted">no initiative</span>')+'</td></tr>';}).join("")+'</tbody></table></div></section>';
+  var ord={"Seeking funding":0,"Partly funded":1,"Not known":2,"Funded":3};function oi(x){var o=ord[x.fundingStatus];return o==null?2:o;}
+  var fl=list.slice().sort(function(a,b){return oi(a)-oi(b)||byName(a,b);});
+  h+='<section class="panel"><div class="ph"><h3>Funding status</h3></div><p class="small muted">Seeking funding first. Funders can see what is already backed, avoid duplicating it, and spot where a grant would unlock reuse by others.</p><div class="tablewrap"><table class="matrix ftable"><thead><tr><th>Initiative</th><th>Stage</th><th>Funding</th><th>Funders</th><th>Next milestone</th></tr></thead><tbody>'+fl.map(function(x){var u=usedBy(x.id).length;return '<tr><th scope="row">'+esc(x.name)+(u?'<div class="small muted">Built on by '+u+'</div>':'')+'</th><td>'+esc(x.stage||"")+'</td><td>'+fundPill(x.fundingStatus)+'</td><td>'+esc(x.funders||"")+'</td><td>'+esc(x.next||"")+(x.timeline?' <span class="muted">· '+esc(x.timeline)+'</span>':'')+'</td></tr>';}).join("")+'</tbody></table></div></section>';
+  var log=[];list.forEach(function(x){arr(x.updates).forEach(function(u){log.push({at:u.at||"",by:u.by,text:u.text,name:x.name});});if(x.createdAt&&!x.example)log.push({at:x.createdAt,by:x.createdBy,text:"Added to the map",name:x.name});});
+  log.sort(function(a,b){return a.at<b.at?1:-1;});
+  h+='<section class="panel"><div class="ph"><h3>Recent progress</h3></div>'+(log.length?'<div class="list">'+log.slice(0,12).map(function(l){return '<div class="item"><div class="when"><b>'+esc(l.at.slice(0,10))+'</b></div><div class="body"><span class="title">'+esc(l.name)+'</span><span class="small">'+esc(l.text)+'</span><div class="meta">'+who(l.by)+'</div></div></div>';}).join("")+'</div>':emptyBox("Updates posted on initiatives appear here, so funders and participants can see what moved."))+'</section>';
+  return h;
+}
+
+function vHurdles(){
+  var list=S.hurdles.filter(hit).sort(hrank);
+  var h='<div class="vhead"><div><h2>Hurdles</h2><p class="muted small">What stops organisations from adopting interoperable traceability? Vote for the hurdles that affect you most. The ranking shapes the working-group agenda. Poll scores come from a stakeholder poll on EUDR interoperability and give the board its starting order.</p></div></div>';
+  h+=form("fh",'<label class="full">Hurdle, in one line<input name="title" id="fh-title" maxlength="160"></label>'+sel("category",CATS,"Category")+sel("theme",THEMES,"Expert theme")+'<label class="full">What happens in practice<textarea name="detail" id="fh-detail" maxlength="800"></textarea></label>'+tagPicker("sectors","Industries affected (leave blank for all)",SECTORS)+tagPicker("regions","Regions affected (leave blank for all)",REGIONS),"Raise a hurdle");
+  h+=loadingOr("hurdles",list.length?'<div class="panel"><div class="list">'+list.map(function(x){return '<div class="item">'+voteBtn("h",x.id)+'<div class="body"><span class="title">'+esc(x.title)+'</span>'+(x.detail?'<span class="small">'+esc(x.detail)+'</span>':'')+'<div class="meta"><span>'+esc(x.category)+'</span>'+pollTag(x)+(x.source?'<span>Source: '+esc(x.source)+'</span>':'')+(x.createdBy&&x.createdBy!=="curated"?'<span>Raised by '+who(x.createdBy)+'</span>':'')+seedPill(x)+'</div><div class="tags">'+tags(x)+'</div><div class="actions">'+removeCtl("hurdles",x)+'</div></div></div>';}).join("")+'</div></div>':emptyBox(S.hurdles.length?"No hurdles match these filters.":"No hurdles yet. Raise the first one above."));
+  return h;
+}
+
+function vIdeas(){
+  var list=S.ideas.filter(hit).sort(function(a,b){return voteCount("i",b.id)-voteCount("i",a.id)||(a.createdAt<b.createdAt?1:-1);});
+  var h='<div class="vhead"><div><h2>Ideas</h2><p class="muted small">Answer a prompt or share anything that would make alignment easier. Support the ideas you agree with.</p></div></div>';
+  h+=form("fd",sel("prompt",PROMPTS,"Prompt").replace('<label>','<label class="full">')+'<label class="full">Your idea<textarea name="text" id="fd-text" maxlength="800"></textarea></label>'+tagPicker("sectors","Industries (optional)",SECTORS)+tagPicker("commodities","Commodities (optional)",COMMODITIES),"Share an idea");
+  var groups={};list.forEach(function(x){(groups[x.prompt||"Something else"]=groups[x.prompt||"Something else"]||[]).push(x);});
+  h+=loadingOr("ideas",list.length?PROMPTS.filter(function(p){return groups[p];}).map(function(p){return '<section class="panel"><h3>'+esc(p)+'</h3><div class="list">'+groups[p].map(function(x){return '<div class="item">'+voteBtn("i",x.id)+'<div class="body"><span>'+esc(x.text)+'</span><div class="meta"><span>'+who(x.createdBy)+'</span><span class="date">'+esc((x.createdAt||"").slice(0,10))+'</span></div><div class="tags">'+(arr(x.sectors).length||arr(x.commodities).length?tags(x):'')+'</div><div class="actions">'+removeCtl("ideas",x)+'</div></div></div>';}).join("")+'</div></section>';}).join(""):emptyBox(S.ideas.length?"No ideas match these filters.":"No ideas yet. Prompts to start with: "+PROMPTS.slice(0,3).map(esc).join(" · ")));
+  return h;
+}
+
+function vRegulation(){
+  function rk(r){var x=regNext(r);if(!x)return "z";var d=pd(x.date);var t0=today();var iso=d?d.toISOString().slice(0,10):x.date;return (d&&d>=t0?"a":"b")+iso;}
+  var list=S.regs.filter(hit).slice().sort(function(a,b){return rk(a)<rk(b)?-1:rk(a)>rk(b)?1:0;});
+  var t=today();var ms=allMilestones(list);var nextIdx=-1;for(var i=0;i<ms.length;i++){var d=pd(ms[i].date);if(d&&d>=t){nextIdx=i;break;}}
+  var checked=S.regs.reduce(function(m,r){return r.checked&&r.checked>m?r.checked:m;},"");
+  var h='<div class="vhead"><div><h2>Regulation and standards</h2><p class="muted small">Rules and standards that drive demand for interoperable traceability data, sorted by the next key date.'+(checked?' Last checked '+fmt(checked)+'.':'')+' Each entry links to its source.</p></div></div>';
+  h+=loadingOr("regs",list.length?'<div class="grid2 gridreg"><div class="panel"><div class="list">'+list.map(function(r){var nx=regNext(r);var n=nx?daysTo(nx.date):null;return '<div class="item"><div class="when'+(n!=null&&n>=0&&n<=90?' soon':'')+'"><b>'+(nx?fmt(nx.date):"")+'</b><span>'+(nx?rel(n):"")+'</span></div><div class="body"><div class="meta" style="gap:6px"><span class="title" style="color:var(--ink);font-size:15px">'+(r.url?'<a href="'+esc(r.url)+'" target="_blank" rel="noopener">'+esc(r.name)+'</a>':esc(r.name))+'</span><span class="pill '+esc(r.statusClass||"proposed")+'">'+esc(r.status)+'</span></div><span class="small">'+esc(r.summary)+'</span>'+(nx?'<span class="small"><b>Next:</b> '+esc(nx.label)+'</span>':'')+'<div class="meta"><span>'+esc(r.kind||"")+'</span><span>'+esc(r.jurisdiction||"")+'</span>'+(r.source?'<span>Source: '+esc(r.source)+'</span>':'')+'</div><div class="tags">'+tags(r)+'</div></div></div>';}).join("")+'</div></div>'+
+    '<div class="panel"><h3>Key dates</h3><div class="timeline">'+ms.map(function(m,i){var d=pd(m.date);var cls=i===nextIdx?" next":(d&&d<t?" past":"");return '<div class="tl'+cls+'"><div class="d">'+fmt(m.date)+(i===nextIdx?' · next':'')+'</div><div class="l">'+esc(m.reg.short||m.reg.name)+': '+esc(m.label)+'</div></div>';}).join("")+'</div></div></div>':emptyBox("No rules or standards match these filters."));
+  return h;
+}
+
+function newsRow(x){return '<div class="item"><div class="when"><b>'+fmt(x.date)+'</b><span>'+esc(x.kind||"")+'</span></div><div class="body"><span class="title">'+(x.url?'<a href="'+esc(x.url)+'" target="_blank" rel="noopener">'+esc(x.title)+'</a>':esc(x.title))+'</span>'+(x.summary?'<span class="small">'+esc(x.summary)+'</span>':'')+'<div class="meta">'+(x.source?'<span>'+esc(x.source)+'</span>':'')+(x.createdBy&&x.createdBy!=="curated"?'<span>Shared by '+who(x.createdBy)+'</span>':'')+'</div><div class="tags">'+tags(x)+'</div><div class="actions">'+removeCtl("news",x)+'</div></div></div>';}
+function vNews(){
+  var list=S.news.filter(hit).sort(function(a,b){return a.date<b.date?1:a.date>b.date?-1:0;});
+  var h='<div class="vhead"><div><h2>News</h2><p class="muted small">Developments in regulation, standards and industry practice, newest first. Curated items are checked against their sources. Participants can share items too.</p></div></div>';
+  h+=form("fn",'<label class="full">Headline<input name="title" id="fn-title" maxlength="200"></label><label>Date<input name="date" id="fn-date" type="date"></label>'+sel("kind",NEWSKINDS,"Kind")+'<label class="full">Link<input name="url" id="fn-url" type="url" maxlength="300" placeholder="https://"></label><label class="full">Why it matters (one or two sentences)<textarea name="summary" id="fn-sum" maxlength="500"></textarea></label>'+tagPicker("sectors","Industries",SECTORS)+tagPicker("regions","Regions",REGIONS)+tagPicker("commodities","Commodities",COMMODITIES),"Share a news item");
+  h+=loadingOr("news",list.length?'<div class="panel"><div class="list">'+list.map(newsRow).join("")+'</div></div>':emptyBox("No news matches these filters."));
+  return h;
+}
+
+function footer(){return '<footer class="about"><span>Prototype for discussion. Entries are shared with everyone who can open this hub. Contributors can add entries and vote; the owner and editors can remove anything.</span><span>Regulatory dates and news were researched from public sources on 3 November 2026. Check the linked source before relying on a date.</span>'+(S.snapshot?'<span>Read-only snapshot taken on 4 November 2026.</span>':'')+'</footer>';}
+
+function render(){
+  renderTabs();
+  var t=tab(),h;
+  if(t==="initiatives")h=vInitiatives();else if(t==="map")h=vMap();else if(t==="progress")h=vProgress();else if(t==="hurdles")h=vHurdles();else if(t==="ideas")h=vIdeas();else if(t==="regulation")h=vRegulation();else if(t==="news")h=vNews();else h=vOverview();
+  var active=document.activeElement&&document.activeElement.id;
+  var openD=[];MAIN.querySelectorAll("details.add[open]").forEach(function(d){openD.push(d.id);});
+  var vals={};MAIN.querySelectorAll("form.f input:not([type=checkbox]),form.f textarea,form.f select").forEach(function(el){if(el.id)vals[el.id]=el.value;});
+  var checks={};MAIN.querySelectorAll("form.f input[type=checkbox]").forEach(function(el){var k=el.closest("form").id+"|"+el.name+"|"+el.value;checks[k]=el.checked;});
+  MAIN.innerHTML='<div class="view">'+h+footer()+'</div>';
+  openD.forEach(function(id){var d=document.getElementById(id);if(d)d.open=true;});
+  Object.keys(vals).forEach(function(id){var el=document.getElementById(id);if(el)el.value=vals[id];});
+  MAIN.querySelectorAll("form.f input[type=checkbox]").forEach(function(el){var f=el.closest("form");var k=(f.id||"")+"|"+el.name+"|"+el.value;if(checks[k])el.checked=true;});
+  if(active){var a=document.getElementById(active);if(a)a.focus();}
+  fillNames();
+}
+
+/* ---------- actions ---------- */
+function picks(form,name){return Array.prototype.map.call(form.querySelectorAll('input[name="'+name+'"]:checked'),function(i){return i.value;});}
+function stamp(){return new Date().toISOString();}
+var busy=false;
+MAIN.addEventListener("submit",async function(e){
+  var form=e.target;e.preventDefault();if(busy||!S.db)return;
+  var id=form.id,fd=new FormData(form),data,col,err="";
+  function v(n){return String(fd.get(n)||"").trim();}
+  if(form.dataset.upd){var txt=v("text");if(!txt){S.msg.upd="Write the update first.";render();return;}
+    var it=S.initiatives.find(function(x){return x.id===form.dataset.upd;});if(!it)return;
+    busy=true;try{var ups=arr(it.updates).concat([{text:txt,by:S.me||"",at:stamp()}]).slice(-20);await S.db.doc("initiatives/"+it.id).update({updates:ups});S.upd=null;S.msg.upd="";}catch(x){S.msg.upd=wErr(x);}busy=false;render();return;}
+  if(id==="fi"){col="initiatives";data={name:v("name"),type:v("type"),stage:v("stage"),lead:v("lead"),tech:v("tech"),objectives:v("objectives"),next:v("next"),timeline:v("timeline"),url:v("url"),fundingStatus:v("fundingStatus"),funders:v("funders"),lessons:v("lessons"),buildsOn:picks(form,"buildsOn"),themes:picks(form,"themes"),sectors:picks(form,"sectors"),regions:picks(form,"regions"),commodities:picks(form,"commodities")};if(!data.name)err="Enter the initiative’s name.";else if(data.url&&!/^https?:\/\//.test(data.url))err="The website should start with https://";}
+  else if(id==="fh"){col="hurdles";data={title:v("title"),category:v("category"),theme:v("theme"),detail:v("detail"),sectors:picks(form,"sectors"),regions:picks(form,"regions"),commodities:[]};if(!data.title)err="Describe the hurdle in one line.";}
+  else if(id==="fd"){col="ideas";data={prompt:v("prompt"),text:v("text"),sectors:picks(form,"sectors"),regions:[],commodities:picks(form,"commodities")};if(!data.text)err="Write your idea first.";}
+  else if(id==="fn"){col="news";data={title:v("title"),date:v("date"),kind:v("kind"),url:v("url"),summary:v("summary"),source:"",sectors:picks(form,"sectors"),regions:picks(form,"regions"),commodities:picks(form,"commodities")};if(!data.title)err="Enter a headline.";else if(!data.date)err="Pick the date of the news.";else if(data.url&&!/^https?:\/\//.test(data.url))err="The link should start with https://";}
+  else return;
+  if(err){S.msg[id]={text:err,err:true,keep:true};render();var fe=document.querySelector("#"+id+" [name]");return;}
+  data.createdBy=S.me||"";data.createdAt=stamp();data.example=false;
+  busy=true;S.msg[id]={text:"Saving…",keep:true};render();
+  try{await S.db.collection(col).add(data);S.msg[id]={text:"Added. Thank you.",keep:false};var f=document.getElementById(id);if(f)f.reset();}
+  catch(x){S.msg[id]={text:wErr(x),err:true,keep:true};}
+  busy=false;render();
+});
+MAIN.addEventListener("input",function(e){var f=e.target.closest("form.f");if(f&&S.msg[f.id]&&S.msg[f.id].err){S.msg[f.id]={text:"",keep:true};var s=f.querySelector("[aria-live]");if(s)s.textContent="";}});
+function wErr(x){var c=x&&x.code;if(c==="invalid_argument"){S.readOnly=true;return "You don’t have permission to add here. Ask the owner for Contributor access.";}if(c==="quota_exceeded")return "The hub is full. Ask the owner to remove old entries.";if(c==="resource_exhausted")return "Too many changes at once. Try again in a moment.";return "That didn’t save. Check your connection and try again.";}
+MAIN.addEventListener("keydown",function(e){if((e.key==="Enter"||e.key===" ")&&e.target.classList&&e.target.classList.contains("sv-click")){e.preventDefault();e.target.dispatchEvent(new MouseEvent("click",{bubbles:true}));}});
+var voting={};
+MAIN.addEventListener("click",async function(e){
+  var b=e.target.closest("[data-act]");if(!b)return;var act=b.dataset.act;
+  if(act==="mapsel"){S.mapSel=S.mapSel===b.dataset.key?null:b.dataset.key;render();var md=document.getElementById("mdetail");if(md&&S.mapSel&&window.innerWidth<900)md.scrollIntoView({block:"start",behavior:"smooth"});return;}
+  if(act==="askdel"){S.confirm=b.dataset.key;render();return;}
+  if(act==="cancel"){S.confirm=null;render();return;}
+  if(act==="upd"){S.upd=b.dataset.id;S.msg.upd="";render();var ta=document.getElementById("upd-"+b.dataset.id);if(ta)ta.focus();return;}
+  if(act==="cancelupd"){S.upd=null;render();return;}
+  if(act==="del"&&S.db){try{await S.db.doc(b.dataset.col+"/"+b.dataset.id).delete();}catch(x){}S.confirm=null;render();return;}
+  if(act==="vote"&&S.db&&S.me){
+    if(voting.on)return;voting.on=true;
+    var kind=b.dataset.kind,id=b.dataset.id;var cur=S.votes[S.me]||{};var next={h:Object.assign({},cur.h||{}),i:Object.assign({},cur.i||{})};
+    if(next[kind][id])delete next[kind][id];else next[kind][id]=true;
+    S.votes[S.me]=next;render();
+    try{await S.db.doc("votes/"+S.me).set(next);}catch(x){S.votes[S.me]=cur;wErr(x);render();}
+    voting.on=false;
+  }
+});
+
+/* ---------- data ---------- */
+function subscribe(name,col){
+  var timer=setTimeout(function(){if(!S.loaded[name]){S.stale=true;S.loaded[name]=true;render();}},10000);
+  S.db.collection(col).onSnapshot(function(snap){
+    var out=[];snap.docs.forEach(function(d){var x=Object.assign({id:d.id},d.data());out.push(x);});
+    if(name==="votes"){var m={};out.forEach(function(x){m[x.id]=x;});S.votes=m;}else S[name]=out;
+    if(!snap.metadata.fromCache){clearTimeout(timer);S.stale=false;}
+    S.loaded[name]=true;render();
+  },function(err){clearTimeout(timer);S.loaded[name]=true;S.stale=true;render();});
+}
+async function boot(){
+  render();renderFilterBar();
+  var c=window.claude;
+  if(!c||typeof c.use!=="function"){if(window.__SNAPSHOT){var D=window.__SNAPSHOT;["regs","news","initiatives","hurdles","ideas"].forEach(function(k){S[k]=(D[k]||[]).slice();S.loaded[k]=true;});S.votes={};S.loaded.votes=true;S.readOnly=true;S.snapshot=true;render();return;}S.noDb=true;render();return;}
+  try{S.db=await c.use("db");}catch(_){S.db=null;}
+  try{S.user=await c.use("user");}catch(_){S.user=null;}
+  if(!S.db){S.noDb=true;render();return;}
+  if(S.user){try{S.me=await S.user.id();}catch(_){}try{S.isAdmin=await S.user.canEdit();}catch(_){}try{var cw=await S.user.can("data.write");S.canWrite=cw;if(cw===false)S.readOnly=true;}catch(_){}}
+  if(!S.me)S.readOnly=S.readOnly||false;
+  subscribe("initiatives","initiatives");subscribe("hurdles","hurdles");subscribe("ideas","ideas");subscribe("news","news");subscribe("regs","regs");subscribe("votes","votes");
+}
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",boot);else boot();
+})();
+</script>
+
+</body>
+</html>
